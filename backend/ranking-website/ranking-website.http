@@ -1,0 +1,6 @@
+@ranking_website_HostAddress = http://localhost:5198
+
+GET {{ranking_website_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

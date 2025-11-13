@@ -1,0 +1,16 @@
+# Node / React
+node_modules/
+dist/
+build/
+.env
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# .NET
+bin/
+obj/
