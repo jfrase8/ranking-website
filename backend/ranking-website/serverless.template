@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: ASP.NET Core Web API running on AWS Lambda with API Gateway HTTP API
+
+Resources:
+
+  ApiGateway:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowMethods: ['*']
+        AllowHeaders: ['*']
+        AllowOrigins: ['*']
+
+  WebApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-WebApi"
+      Handler: ranking-website::ranking_website.LambdaEntryPoint::FunctionHandlerAsync
+      Runtime: dotnet8
+      MemorySize: 1024
+      Timeout: 30
+      PackageType: Zip
+      Architectures:
+        - x86_64
+      Events:
+        ProxyApiRoot:
+          Type: HttpApi
+          Properties:
+            Path: /
+            Method: ANY
+            ApiId: !Ref ApiGateway
+        ProxyApiAny:
+          Type: HttpApi
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+            ApiId: !Ref ApiGateway
+
+Outputs:
+  ApiUrl:
+    Description: "Invoke URL for API Gateway"
+    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/"
