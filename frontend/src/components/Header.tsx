@@ -7,28 +7,32 @@ export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <>
-      <header className="p-4 flex items-center bg-gray-800 text-white shadow-lg">
+    <div className="h-18">
+      <header className="p-4 flex items-center bg-linear-to-r from-indigo-950 to-indigo-800 text-white shadow-lg">
         <button
           onClick={() => setIsOpen(true)}
-          className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+          className="p-2 hover:bg-indigo-500/20 hover:text-indigo-200 rounded-lg transition-colors duration-300 cursor-pointer"
           aria-label="Open menu"
         >
           <Menu size={24} />
         </button>
         <h1 className="ml-4 text-xl font-semibold">
-          <Link to="/">
-            <img
+          <Link
+            to="/"
+            className="p-2 hover:text-indigo-200 hover:bg-indigo-500/20 text-2xl text-white transition-colors duration-300 rounded-lg"
+          >
+            {/* <img
               src="/tanstack-word-logo-white.svg"
               alt="TanStack Logo"
               className="h-10"
-            />
+            /> */}
+            Ranking Website
           </Link>
         </h1>
       </header>
 
       <aside
-        className={`fixed top-0 left-0 h-full w-80 bg-gray-900 text-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out flex flex-col ${
+        className={`fixed top-0 left-0 h-full w-80 bg-indigo-950 border-r-3 rounded-tr-lg border-indigo-500 text-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out flex flex-col ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -101,6 +105,6 @@ export default function Header() {
           {/* Demo Links End */}
         </nav>
       </aside>
-    </>
+    </div>
   )
 }
