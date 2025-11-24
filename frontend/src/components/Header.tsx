@@ -1,33 +1,27 @@
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 
 import { useState } from 'react'
 import { ClipboardType, Home, Menu, Network, X } from 'lucide-react'
+import { Button } from './ui/button'
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
+  const navigate = useNavigate()
 
   return (
     <div className="h-18">
       <header className="p-4 flex items-center bg-linear-to-r from-indigo-950 to-indigo-800 text-white shadow-lg">
-        <button
-          onClick={() => setIsOpen(true)}
-          className="p-2 hover:bg-indigo-500/20 hover:text-indigo-200 rounded-lg transition-colors duration-300 cursor-pointer"
-          aria-label="Open menu"
-        >
-          <Menu size={24} />
-        </button>
+        <Button size="icon-lg" variant="ghost" onClick={() => setIsOpen(true)}>
+          <Menu />
+        </Button>
         <h1 className="ml-4 text-xl font-semibold">
-          <Link
-            to="/"
-            className="p-2 hover:text-indigo-200 hover:bg-indigo-500/20 text-2xl text-white transition-colors duration-300 rounded-lg"
+          <Button
+            size="lg"
+            variant="ghost"
+            onClick={() => navigate({ to: '/' })}
           >
-            {/* <img
-              src="/tanstack-word-logo-white.svg"
-              alt="TanStack Logo"
-              className="h-10"
-            /> */}
             Ranking Website
-          </Link>
+          </Button>
         </h1>
       </header>
 
@@ -60,7 +54,6 @@ export default function Header() {
             <Home size={20} />
             <span className="font-medium">Home</span>
           </Link>
-
           {/* Demo Links Start */}
 
           <Link
