@@ -1,8 +1,26 @@
-import { Link, useNavigate } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 
 import { useState } from 'react'
 import { ClipboardType, Home, Menu, Network, X } from 'lucide-react'
 import { Button } from './ui/button'
+
+const navItems = [
+  {
+    label: 'Home',
+    href: '/',
+    icon: Home,
+  },
+  {
+    label: 'Network',
+    href: '/ranking/numbered-list',
+    icon: Network,
+  },
+  {
+    label: 'Clipboard',
+    href: '/ranking/tier-list',
+    icon: ClipboardType,
+  },
+]
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
@@ -32,70 +50,26 @@ export default function Header() {
       >
         <div className="flex items-center justify-between p-4 border-b border-gray-700">
           <h2 className="text-xl font-bold">Navigation</h2>
-          <button
+          <Button
             onClick={() => setIsOpen(false)}
-            className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
             aria-label="Close menu"
+            variant="ghost"
+            size="icon-lg"
           >
             <X size={24} />
-          </button>
+          </Button>
         </div>
 
-        <nav className="flex-1 p-4 overflow-y-auto">
-          <Link
-            to="/"
-            onClick={() => setIsOpen(false)}
-            className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
-            activeProps={{
-              className:
-                'flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
-            }}
-          >
-            <Home size={20} />
-            <span className="font-medium">Home</span>
-          </Link>
-          {/* Demo Links Start */}
-
-          <Link
-            to="/demo/form/simple"
-            onClick={() => setIsOpen(false)}
-            className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
-            activeProps={{
-              className:
-                'flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
-            }}
-          >
-            <ClipboardType size={20} />
-            <span className="font-medium">Simple Form</span>
-          </Link>
-
-          <Link
-            to="/demo/form/address"
-            onClick={() => setIsOpen(false)}
-            className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
-            activeProps={{
-              className:
-                'flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
-            }}
-          >
-            <ClipboardType size={20} />
-            <span className="font-medium">Address Form</span>
-          </Link>
-
-          <Link
-            to="/demo/tanstack-query"
-            onClick={() => setIsOpen(false)}
-            className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
-            activeProps={{
-              className:
-                'flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
-            }}
-          >
-            <Network size={20} />
-            <span className="font-medium">TanStack Query</span>
-          </Link>
-
-          {/* Demo Links End */}
+        <nav className="flex flex-col p-4 overflow-y-auto">
+          {navItems.map(({ href, label, icon }) => (
+            <Button
+              variant="ghost"
+              onClick={() => navigate({ to: href })}
+              className="justify-start py-6"
+            >
+              {label}
+            </Button>
+          ))}
         </nav>
       </aside>
     </div>
