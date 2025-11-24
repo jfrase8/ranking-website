@@ -14,7 +14,7 @@ interface MyRouterContext {
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   component: () => (
-    <div className="flex flex-col h-screen w-full">
+    <div className="flex flex-col h-screen w-full bg-indigo-100">
       <Header />
       <Outlet />
       <TanStackDevtools

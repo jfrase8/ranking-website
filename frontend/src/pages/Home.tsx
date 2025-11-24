@@ -11,5 +11,5 @@ export default function Home({}: Props) {
   //   },
   // })
   // return <div>{JSON.stringify(data)}</div>
-  return <div className="flex h-full bg-indigo-100">Home</div>
+  return <div className="flex h-full">Home</div>
 }

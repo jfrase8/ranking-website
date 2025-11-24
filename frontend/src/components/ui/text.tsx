@@ -1,0 +1,37 @@
+import { cva, type VariantProps } from 'class-variance-authority'
+
+import { cn } from '@/lib/utils'
+
+const textVariants = cva('leading-none', {
+  variants: {
+    variant: {
+      default:
+        'text-base font-medium text-primary dark:text-primary-foreground',
+      header:
+        'text-2xl font-semibold text-primary dark:text-primary-foreground font-goldman',
+      subText:
+        'text-sm font-medium text-muted-foreground dark:text-muted-foreground',
+    },
+  },
+  defaultVariants: {
+    variant: 'default',
+  },
+})
+
+type TextProps = {
+  className?: string
+  children: React.ReactNode
+} & VariantProps<typeof textVariants>
+function Text({ className, children, variant, ...props }: TextProps) {
+  return (
+    <span
+      data-slot="text"
+      className={cn(textVariants({ variant, className }))}
+      {...props}
+    >
+      {children}
+    </span>
+  )
+}
+
+export { Text, textVariants }
