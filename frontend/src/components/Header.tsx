@@ -11,12 +11,12 @@ const navItems = [
     icon: Home,
   },
   {
-    label: 'Network',
+    label: 'Numbered List',
     href: '/ranking/numbered-list',
     icon: Network,
   },
   {
-    label: 'Clipboard',
+    label: 'Tier List',
     href: '/ranking/tier-list',
     icon: ClipboardType,
   },
