@@ -13,14 +13,6 @@
 
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
-
-            //services.AddAuthentication(NegotiateDefaults.AuthenticationScheme)
-            //    .AddNegotiate();
-
-            //services.AddAuthorization(options =>
-            //{
-            //    options.FallbackPolicy = options.DefaultPolicy;
-            //});
         }
 
         // 2. Configure Middleware Pipeline (same as your Program.cs)
@@ -37,7 +29,6 @@
             app.UseAuthentication();
 
             app.UseRouting();
-            //app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
