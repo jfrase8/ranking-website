@@ -5,7 +5,9 @@ import {
   useDroppable,
   type DragEndEvent,
 } from '@dnd-kit/core'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 type Draggable = {
   id: string
@@ -20,23 +22,33 @@ type DropZone = {
 }
 
 export default function TierList() {
+  const defaultDraggables = useMemo(
+    () => [
+      { id: crypto.randomUUID(), src: 'GolemCard.png', dz: null },
+      { id: crypto.randomUUID(), src: 'MegaKnight.png', dz: null },
+      { id: crypto.randomUUID(), src: 'BabyDragonCard.png', dz: null },
+    ],
+    [],
+  )
+
+  const defaultDropZones = useMemo(
+    () => [
+      { id: crypto.randomUUID(), title: 'S', items: [] },
+      { id: crypto.randomUUID(), title: 'A', items: [] },
+      { id: crypto.randomUUID(), title: 'B', items: [] },
+      { id: crypto.randomUUID(), title: 'C', items: [] },
+      { id: crypto.randomUUID(), title: 'D', items: [] },
+      { id: crypto.randomUUID(), title: 'E', items: [] },
+      { id: crypto.randomUUID(), title: 'F', items: [] },
+    ],
+    [],
+  )
+
   // State for ALL draggables
-  const [draggables, setDraggables] = useState<Draggable[]>([
-    { id: crypto.randomUUID(), src: 'GolemCard.png', dz: null },
-    { id: crypto.randomUUID(), src: 'MegaKnight.png', dz: null },
-    { id: crypto.randomUUID(), src: 'BabyDragonCard.png', dz: null },
-  ])
+  const [draggables, setDraggables] = useState<Draggable[]>(defaultDraggables)
 
   // State for ALL drop zones
-  const [dropZones, setDropZones] = useState<DropZone[]>([
-    { id: crypto.randomUUID(), title: 'S', items: [] },
-    { id: crypto.randomUUID(), title: 'A', items: [] },
-    { id: crypto.randomUUID(), title: 'B', items: [] },
-    { id: crypto.randomUUID(), title: 'C', items: [] },
-    { id: crypto.randomUUID(), title: 'D', items: [] },
-    { id: crypto.randomUUID(), title: 'E', items: [] },
-    { id: crypto.randomUUID(), title: 'F', items: [] },
-  ])
+  const [dropZones, setDropZones] = useState<DropZone[]>(defaultDropZones)
 
   const handleDragEnd = (event: DragEndEvent) => {
     // Find which tier we're hovering over
@@ -65,6 +77,14 @@ export default function TierList() {
 
   return (
     <div className="flex flex-col gap-12">
+      <Button
+        onClick={() => {
+          setDraggables(defaultDraggables)
+          setDropZones(defaultDropZones)
+        }}
+      >
+        Reset
+      </Button>
       <DndContext onDragEnd={handleDragEnd}>
         <div className="p-12">
           {dropZones.map((tier) => (
@@ -94,16 +114,9 @@ function TierRow({
   const { isOver, setNodeRef } = useDroppable({
     id,
   })
-  const style = {
-    color: isOver ? 'green' : undefined,
-  }
 
   return (
-    <div
-      className="flex min-h-20 border-b border-foreground"
-      ref={setNodeRef}
-      style={style}
-    >
+    <div className="flex min-h-20 border-b border-foreground" ref={setNodeRef}>
       <div
         className={clsx(
           'w-24 flex items-center justify-center text-2xl font-bold',
@@ -112,7 +125,12 @@ function TierRow({
       >
         {title}
       </div>
-      <div className="flex flex-1 bg-secondary border-l border-foreground">
+      <div
+        className={cn(
+          'flex flex-1 bg-secondary border-l border-foreground',
+          isOver ? 'bg-accent/50' : undefined,
+        )}
+      >
         {items.map((item) => {
           const draggable = draggables.find((d) => d.id === item)
           if (!draggable) return null
