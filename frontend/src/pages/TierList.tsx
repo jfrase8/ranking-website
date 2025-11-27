@@ -52,8 +52,8 @@ export default function TierList() {
 
   const handleDragEnd = (event: DragEndEvent) => {
     // Find which tier we're hovering over
-    const dropZoneOver = String(event.over?.id)
-    if (!dropZoneOver) return
+    if (!event.over?.id) return
+    const dropZoneOver = String(event.over.id)
 
     // ID of the draggable we're dragging
     const draggableId = String(event.active.id)
@@ -62,7 +62,13 @@ export default function TierList() {
     setDropZones((prev) =>
       prev.map((dz) =>
         dz.id === dropZoneOver
-          ? { ...dz, items: [...dz.items, draggableId] } // If this is the draggable we're over, add this draggable to it
+          ? {
+              ...dz,
+              items: [
+                ...dz.items.filter((item) => item !== draggableId),
+                draggableId,
+              ],
+            } // If this is the draggable we're over, add this draggable to it
           : dz.items.find((item) => item === draggableId) // if draggable was already in a drop zone, remove it from the old one
             ? { ...dz, items: dz.items.filter((item) => item !== draggableId) }
             : dz,
@@ -177,7 +183,7 @@ function DraggableTile({ id, src }: { id: string; src: string }) {
       style={style}
       {...listeners}
       {...attributes}
-      className="bg-red-500 rounded-lg max-h-30 cursor-pointer"
+      className="rounded-lg max-h-30 aspect-[0.833] cursor-pointer"
     >
       <img
         src={`/src/assets/${src}`}
