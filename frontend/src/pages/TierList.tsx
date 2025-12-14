@@ -1,14 +1,22 @@
 import clsx from 'clsx'
 import {
   DndContext,
-  useDraggable,
+  KeyboardSensor,
+  PointerSensor,
   useDroppable,
+  useSensor,
+  useSensors,
   type DragEndEvent,
-  type DragOverEvent,
 } from '@dnd-kit/core'
 import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import {
+  horizontalListSortingStrategy,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+} from '@dnd-kit/sortable'
 
 type Draggable = {
   id: string
@@ -22,6 +30,7 @@ type DropZone = {
   items: string[]
 }
 
+//#region Tier List
 export default function TierList() {
   const defaultDraggables = useMemo(
     () => [
@@ -59,129 +68,46 @@ export default function TierList() {
   // State for ALL drop zones
   const [dropZones, setDropZones] = useState<DropZone[]>(defaultDropZones)
 
-  // Track the current drag over position for reordering
-  const [dragOverPosition, setDragOverPosition] = useState<{
-    tierId: string
-    index: number
-  } | null>(null)
-
-  const handleDragOver = (event: DragOverEvent) => {
-    if (!event.over?.id) {
-      setDragOverPosition(null)
-      return
-    }
-
-    const overId = String(event.over.id)
-
-    // Check if we're over a position-based drop zone (format: tier-${tierId}-pos-${index})
-    const positionMatch = overId.match(/^tier-(.+)-pos-(\d+)$/)
-    if (positionMatch) {
-      const [, tierId, indexStr] = positionMatch
-      setDragOverPosition({ tierId, index: parseInt(indexStr, 10) })
-      return
-    }
-
-    // Check if we're over a tier row itself
-    const tierMatch = dropZones.find((dz) => dz.id === overId)
-    if (tierMatch) {
-      // If tier is empty or we're at the end, set position to the end
-      setDragOverPosition({
-        tierId: tierMatch.id,
-        index: tierMatch.items.length,
-      })
-      return
-    }
-
-    setDragOverPosition(null)
-  }
-
   const handleDragEnd = (event: DragEndEvent) => {
     // Find which tier we're hovering over
-    if (!event.over?.id) {
-      setDragOverPosition(null)
-      return
-    }
+    if (!event.over?.id) return
 
-    const overId = String(event.over.id)
+    const dropZoneOver = String(event.over.id)
     const draggableId = String(event.active.id)
 
     let targetTierId: string | null = null
-    let insertIndex: number | null = null
-
-    // Check if we're over a position-based drop zone
-    const positionMatch = overId.match(/^tier-(.+)-pos-(\d+)$/)
-    if (positionMatch) {
-      const [, tierId, indexStr] = positionMatch
-      targetTierId = tierId
-      insertIndex = parseInt(indexStr, 10)
-    } else {
-      // Check if we're over a tier row itself
-      const tier = dropZones.find((dz) => dz.id === overId)
-      if (tier) {
-        targetTierId = tier.id
-        insertIndex = tier.items.length
-      } else {
-        setDragOverPosition(null)
-        return
-      }
-    }
-
-    if (!targetTierId || insertIndex === null) {
-      setDragOverPosition(null)
-      return
-    }
-
-    // Find the source tier (where the draggable currently is)
-    const sourceTier = dropZones.find((dz) => dz.items.includes(draggableId))
-    const sourceIndex = sourceTier?.items.indexOf(draggableId) ?? -1
 
     // Update dropZones
     setDropZones((prev) =>
-      prev.map((dz) => {
-        if (dz.id === targetTierId) {
-          // Target tier: insert at the specified position
-          const itemsWithoutDraggable = dz.items.filter(
-            (item) => item !== draggableId,
-          )
-
-          // Adjust insert index if we're moving within the same tier
-          let adjustedIndex = insertIndex
-          if (
-            sourceTier?.id === targetTierId &&
-            sourceIndex !== -1 &&
-            sourceIndex < insertIndex
-          ) {
-            adjustedIndex = insertIndex - 1
-          }
-
-          const newItems = [
-            ...itemsWithoutDraggable.slice(0, adjustedIndex),
-            draggableId,
-            ...itemsWithoutDraggable.slice(adjustedIndex),
-          ]
-
-          return {
-            ...dz,
-            items: newItems,
-          }
-        } else if (dz.id === sourceTier?.id && dz.id !== targetTierId) {
-          // Source tier (different from target): remove the draggable
-          return {
-            ...dz,
-            items: dz.items.filter((item) => item !== draggableId),
-          }
-        }
-        return dz
-      }),
+      prev.map((dz) =>
+        dz.id === dropZoneOver
+          ? {
+              ...dz,
+              items: [
+                ...dz.items.filter((item) => item !== draggableId),
+                draggableId,
+              ],
+            } // If this is the draggable we're over, add this draggable to it
+          : dz.items.find((item) => item === draggableId) // if draggable was already in a drop zone, remove it from the old one
+            ? { ...dz, items: dz.items.filter((item) => item !== draggableId) }
+            : dz,
+      ),
     )
 
     // Update draggables
     setDraggables((prev) =>
       prev.map((d) => (d.id === draggableId ? { ...d, dz: targetTierId } : d)),
     )
-
-    setDragOverPosition(null)
   }
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  )
+
+  const freeDraggables = draggables.filter((draggable) => draggable.dz === null)
 
   return (
     <div className="flex flex-col gap-12">
@@ -193,45 +119,41 @@ export default function TierList() {
       >
         Reset
       </Button>
-      <DndContext onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
+      <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
         <div className="p-12">
           {dropZones.map((tier) => (
-            <TierRow
-              key={tier.id}
-              tier={tier}
-              draggables={draggables}
-              dragOverPosition={dragOverPosition}
-            />
+            <TierRow key={tier.id} tier={tier} draggables={draggables} />
           ))}
         </div>
-        <div className="px-12 grid grid-cols-12">
-          {draggables
-            .filter((draggable) => draggable.dz === null)
-            .map(({ id, src }) => (
-              <DraggableTile id={id} key={id} src={src} />
-            ))}
-        </div>
+        <SortableContext
+          items={freeDraggables}
+          strategy={horizontalListSortingStrategy}
+        >
+          <div className="px-12 grid grid-cols-12">
+            {freeDraggables
+              .filter((draggable) => draggable.dz === null)
+              .map(({ id, src }) => (
+                <DraggableTile id={id} key={id} src={src} />
+              ))}
+          </div>
+        </SortableContext>
       </DndContext>
     </div>
   )
 }
 
+// #region Tier Row
 function TierRow({
   tier,
   draggables,
-  dragOverPosition,
 }: {
   tier: DropZone
   draggables: Draggable[]
-  dragOverPosition: { tierId: string; index: number } | null
 }) {
   const { id, title, items } = tier
   const { isOver, setNodeRef } = useDroppable({
     id,
   })
-
-  const isThisTierActive =
-    dragOverPosition?.tierId === id && dragOverPosition !== null
 
   return (
     <div className="flex min-h-20 border-b border-foreground" ref={setNodeRef}>
@@ -246,32 +168,27 @@ function TierRow({
       <div
         className={cn(
           'flex flex-1 bg-secondary border-l border-foreground',
-          isOver && !isThisTierActive ? 'bg-accent/50' : undefined,
+          isOver ? 'bg-accent/50' : undefined,
         )}
       >
-        {/* Drop zone at the start of the list */}
-        <PositionDropZone
-          positionId={`tier-${id}-pos-0`}
-          isActive={isThisTierActive && dragOverPosition.index === 0}
-        />
-        {/* Render items with drop zones between them */}
-        {items.map((item, index) => {
-          const draggable = draggables.find((d) => d.id === item)
-          if (!draggable) return null
-
-          return (
-            <div key={draggable.id} className="flex items-center">
-              <DraggableTile id={draggable.id} src={draggable.src} />
-              {/* Drop zone after this item */}
-              <PositionDropZone
-                positionId={`tier-${id}-pos-${index + 1}`}
-                isActive={
-                  isThisTierActive && dragOverPosition.index === index + 1
-                }
+        <SortableContext items={items} strategy={horizontalListSortingStrategy}>
+          {/* Drop zone at the start of the list */}
+          {/* {isThisTierActive && dragOverPosition.index === 0 && (
+            <HoverZone positionId={`tier-${id}-pos-0`} />
+          )} */}
+          {/* Render items with drop zones between them */}
+          {items.map((item, index) => {
+            const draggable = draggables.find((d) => d.id === item)
+            if (!draggable) return null
+            return (
+              <DraggableTile
+                key={draggable.id}
+                id={draggable.id}
+                src={draggable.src}
               />
-            </div>
-          )
-        })}
+            )
+          })}
+        </SortableContext>
       </div>
       <div className="w-24 bg-secondary border-l border-foreground p-4">
         UP/DOWN
@@ -280,29 +197,17 @@ function TierRow({
   )
 }
 
-function PositionDropZone({
-  positionId,
-  isActive,
-}: {
-  positionId: string
-  isActive: boolean
-}) {
-  const { setNodeRef, isOver } = useDroppable({
+//#region Hover Zone
+function HoverZone({ positionId }: { positionId: string }) {
+  const { setNodeRef } = useDroppable({
     id: positionId,
   })
 
   return (
     <div
       ref={setNodeRef}
-      className={cn(
-        'w-3 min-w-3 h-full transition-all shrink-0 flex items-center justify-center',
-        isActive || isOver ? 'bg-primary/50' : 'bg-transparent',
-      )}
-    >
-      {(isActive || isOver) && (
-        <div className="w-full h-1 bg-primary rounded-full" />
-      )}
-    </div>
+      className="w-25 h-full transition-all shrink-0 flex items-center justify-center bg-primary/50"
+    />
   )
 }
 
@@ -316,8 +221,9 @@ const tierColors: Record<string, string> = {
   F: 'bg-purple-500',
 }
 
+//#region Draggable
 function DraggableTile({ id, src }: { id: string; src: string }) {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+  const { attributes, listeners, setNodeRef, transform } = useSortable({
     id,
   })
 
