@@ -5,7 +5,7 @@ using ranking_website.Services;
 namespace ranking_website.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("sigma/api/[controller]")]
     public class ListsController(IListService listService) : ControllerBase
     {
         private readonly IListService _listService = listService;
@@ -15,6 +15,7 @@ namespace ranking_website.Controllers
         {
             try
             {
+                Console.WriteLine("help");
                 var items = await _listService.GetListItemsAsync(listId);
                 return Ok(items);
             }

@@ -2,8 +2,8 @@
 
 namespace ranking_website
 {
-
-    public class LambdaEntryPoint : APIGatewayHttpApiV2ProxyFunction
+    // Changed from APIGatewayHttpApiV2ProxyFunction to APIGatewayProxyFunction
+    public class LambdaEntryPoint : APIGatewayProxyFunction
     {
         protected override void Init(IWebHostBuilder builder)
         {
