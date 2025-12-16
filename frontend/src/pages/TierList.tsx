@@ -91,10 +91,13 @@ export default function TierList() {
     const overDraggable = draggables.find((d) => d.id === overId)
 
     const activeDropZoneId = activeDraggable?.dz
-    const overDropZoneId = overDraggable?.dz
 
-    console.log({ activeDropZoneId, overDropZoneId })
+    // Are we over a drop zone?
+    const isOverDropZone = dropZones.find((dz) => dz.id === overId)
 
+    const overDropZoneId = isOverDropZone ? isOverDropZone.id : overDraggable?.dz
+
+    console.log({ overDropZoneId, activeDropZoneId })
     // Only handle cross-zone movement here
     if (!overDropZoneId || activeDropZoneId === overDropZoneId) return
 
@@ -109,6 +112,7 @@ export default function TierList() {
 
         // Remove from old drop zone
         if (dz.id === activeDropZoneId) {
+          console.log('brothsdsder')
           return { ...dz, items: dz.items.filter((item) => item !== activeId) }
         }
 
@@ -116,9 +120,11 @@ export default function TierList() {
         if (dz.id === overDropZoneId && newIndex !== -1) {
           const newItems = [...dz.items]
           newItems.splice(newIndex, 0, activeId)
+          console.log('brothe2222r')
           return { ...dz, items: newItems }
         }
 
+        console.log('brother')
         return dz
       }),
     )
@@ -364,62 +370,6 @@ function DraggableContent({
     />
   )
 }
-
-// function SigmaRow() {
-//   const defaultDraggables = useMemo(
-//     () => [
-//       { id: crypto.randomUUID(), src: 'GolemCard.png', dz: null },
-//       { id: crypto.randomUUID(), src: 'MegaKnight.png', dz: null },
-//       { id: crypto.randomUUID(), src: 'BabyDragonCard.png', dz: null },
-//       { id: crypto.randomUUID(), src: 'BarbariansCard.png', dz: null },
-//       { id: crypto.randomUUID(), src: 'BomberCard.png', dz: null },
-//       { id: crypto.randomUUID(), src: 'DarkPrinceCard.png', dz: null },
-//       { id: crypto.randomUUID(), src: 'ElixirGolemCard.png', dz: null },
-//       { id: crypto.randomUUID(), src: 'MinerCard.png', dz: null },
-//       { id: crypto.randomUUID(), src: 'PEKKACard.png', dz: null },
-//       { id: crypto.randomUUID(), src: 'RagingPrinceCard.png', dz: null },
-//       { id: crypto.randomUUID(), src: 'SkeletonsCard.png', dz: null },
-//     ],
-//     [],
-//   )
-
-//   const [items, setItems] = useState(defaultDraggables)
-
-//   const sensors = useSensors(
-//     useSensor(PointerSensor, {
-//       activationConstraint: { distance: 5 },
-//     }),
-//   )
-
-//   function handleDragEnd(event: any) {
-//     const { active, over } = event
-
-//     if (!over || active.id === over.id) return
-
-//     setItems((items) => {
-//       const oldIndex = items.findIndex((item) => item.id === active.id)
-//       const newIndex = items.findIndex((item) => item.id === over.id)
-
-//       return arrayMove(items, oldIndex, newIndex)
-//     })
-//   }
-
-//   return (
-//     <div className="flex min-h-20 border-b border-foreground">
-//       <div className={clsx('w-24 flex items-center justify-center text-2xl font-bold')}>Sigma</div>
-//       <div className={cn('flex flex-1 border-l border-foreground bg-[#333]')}>
-//         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-//           <SortableContext items={items} strategy={horizontalListSortingStrategy}>
-//             {items.map((item) => {
-//               const { id, src } = item
-//               return <DraggableTile key={id} id={id} src={src} />
-//             })}
-//           </SortableContext>
-//         </DndContext>
-//       </div>
-//     </div>
-//   )
-// }
 
 const tierColors: Record<string, string> = {
   S: 'bg-red-500',
