@@ -128,8 +128,8 @@ export default function TierList() {
     const { active, over } = event
     if (!over || !event?.over?.id || active.id === over.id) return setActiveDraggable(null)
 
-    const activeId = event.active.id
-    const overId = event.over.id
+    const activeId = event.active.id as string
+    const overId = event.over.id as string
 
     const activeDraggable = draggables.find((d) => d.id === activeId)
     const draggableOver = draggables.find((dz) => dz.id === overId)
@@ -158,8 +158,6 @@ export default function TierList() {
         }),
       )
     }
-
-    console.log(draggableOver?.dz, activeDraggable?.dz)
 
     // Draggable moved from one sortable context to another
     if (draggableOver?.dz && draggableOver?.dz !== activeDraggable?.dz) {
@@ -192,8 +190,15 @@ export default function TierList() {
       setDropZones((prev) =>
         prev.map((dz) => {
           // Remove draggable from its old drop zone
-          if (dz.id === oldDropZoneId) {
+          if (dz.id === oldDropZoneId && dropZoneOver?.id !== oldDropZoneId) {
             const newItems = dz.items.filter((item) => item !== activeId)
+            return { ...dz, items: newItems }
+          }
+
+          // If we dropped it at the end of the dropzone it was already in
+          if (dz.id === dropZoneOver?.id && dropZoneOver?.id === oldDropZoneId) {
+            const newItems = dz.items.filter((item) => item !== activeId)
+            newItems.push(activeId)
             return { ...dz, items: newItems }
           }
 
@@ -204,6 +209,8 @@ export default function TierList() {
 
     setActiveDraggable(null)
   }
+
+  console.log(dropZones)
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -274,7 +281,7 @@ function TierRow({
   })
 
   return (
-    <div className="flex min-h-20 border-b border-foreground" ref={setNodeRef}>
+    <div className="flex min-h-30 border-b border-foreground" ref={setNodeRef}>
       <div
         className={clsx(
           'w-24 flex items-center justify-center text-2xl font-bold',
@@ -284,7 +291,7 @@ function TierRow({
         {title}
       </div>
       <div
-        className={cn('flex flex-1 border-l border-foreground bg-[#333]', isOver && 'bg-red-500')}
+        className={cn('flex flex-1 border-l border-foreground bg-[#333]', isOver && 'bg-accent')}
       >
         <SortableContext items={items} strategy={horizontalListSortingStrategy}>
           {items.map((item, index) => {
