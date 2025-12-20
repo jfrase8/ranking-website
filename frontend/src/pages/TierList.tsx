@@ -11,7 +11,7 @@ import {
   type DragOverEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
-import { useRef, useState } from 'react'
+import { useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { atom, useAtom, useAtomValue } from 'jotai'
@@ -38,34 +38,35 @@ type DropZone = {
 }
 
 const defaultDraggables = [
-  { id: 8, src: 'GolemCard.png', dz: 2 },
-  { id: 9, src: 'MegaKnight.png', dz: 4 },
-  { id: 10, src: 'BabyDragonCard.png', dz: 5 },
-  { id: 11, src: 'BarbariansCard.png', dz: 4 },
-  { id: 12, src: 'BomberCard.png', dz: 4 },
-  { id: 13, src: 'DarkPrinceCard.png', dz: 2 },
-  { id: 14, src: 'ElixirGolemCard.png', dz: 7 },
-  { id: 15, src: 'MinerCard.png', dz: 6 },
-  { id: 16, src: 'PEKKACard.png', dz: 1 },
-  { id: 17, src: 'RagingPrinceCard.png', dz: 3 },
-  { id: 18, src: 'SkeletonsCard.png', dz: 6 },
+  { id: '8', src: 'GolemCard.png', dz: '2' },
+  { id: '9', src: 'MegaKnight.png', dz: '4' },
+  { id: '10', src: 'BabyDragonCard.png', dz: '5' },
+  { id: '11', src: 'BarbariansCard.png', dz: '4' },
+  { id: '12', src: 'BomberCard.png', dz: '4' },
+  { id: '13', src: 'DarkPrinceCard.png', dz: '2' },
+  { id: '14', src: 'ElixirGolemCard.png', dz: '7' },
+  { id: '15', src: 'MinerCard.png', dz: '6' },
+  { id: '16', src: 'PEKKACard.png', dz: '1' },
+  { id: '17', src: 'RagingPrinceCard.png', dz: '3' },
+  { id: '18', src: 'SkeletonsCard.png', dz: '6' },
 ]
 const defaultDropZones = [
-  { id: 1, title: 'S', items: [16] },
-  { id: 2, title: 'A', items: [8, 13] },
-  { id: 3, title: 'B', items: [17] },
-  { id: 4, title: 'C', items: [9, 11, 12] },
-  { id: 5, title: 'D', items: [10] },
-  { id: 6, title: 'E', items: [15, 18] },
-  { id: 7, title: 'F', items: [14] },
+  { id: '1', title: 'S', items: ['16'] },
+  { id: '2', title: 'A', items: ['8', '13'] },
+  { id: '3', title: 'B', items: ['17'] },
+  { id: '4', title: 'C', items: ['9', '11', '12'] },
+  { id: '5', title: 'D', items: ['10'] },
+  { id: '6', title: 'E', items: ['15', '18'] },
+  { id: '7', title: 'F', items: ['14'] },
 ]
 
 const draggablesAtom = atom<Draggable[]>(defaultDraggables)
 const dropZonesAtom = atom<DropZone[]>(defaultDropZones)
+const activeDraggableAtom = atom<Draggable | null>(null)
 
 //#region Tier List
 export default function TierList() {
-  const [activeDraggable, setActiveDraggable] = useState<Draggable | null>(null)
+  const [activeDraggable, setActiveDraggable] = useAtom<Draggable | null>(activeDraggableAtom)
 
   // State for ALL draggables
   const [draggables, setDraggables] = useAtom<Draggable[]>(draggablesAtom)
@@ -85,8 +86,8 @@ export default function TierList() {
     const { active, over } = event
     if (!over || active.id === over.id) return
 
-    const activeId = active.id
-    const overId = over.id
+    const activeId = active.id as string
+    const overId = over.id as string
 
     const activeDraggable = draggables.find((d) => d.id === activeId)
     const overDraggable = draggables.find((d) => d.id === overId)
@@ -132,8 +133,7 @@ export default function TierList() {
         }
 
         if (dz.id === overDropZoneId && newIndex !== -1) {
-          const newItems = [...dz.items]
-          newItems.splice(newIndex, 0, activeId)
+          const newItems = dz.items.toSpliced(newIndex, 0, activeId)
           return { ...dz, items: newItems }
         }
 
@@ -269,14 +269,7 @@ export default function TierList() {
       >
         <div className="p-12">
           {dropZones.map((tier, index) => (
-            <TierRow
-              key={tier.id}
-              tier={tier}
-              draggables={draggables}
-              activeId={activeDraggable?.id}
-              shiftRow={shiftRow}
-              index={index}
-            />
+            <TierRow key={tier.id} tier={tier} shiftRow={shiftRow} index={index} />
           ))}
         </div>
         <div className="px-12 grid grid-cols-12">
@@ -284,7 +277,7 @@ export default function TierList() {
             {freeDraggables
               .filter((draggable) => draggable.dz === null)
               .map(({ id, src }) => (
-                <DraggableTile id={id} key={id} src={src} activeId={activeDraggable?.id} />
+                <DraggableTile id={id} key={id} src={src} />
               ))}
           </SortableContext>
         </div>
@@ -337,7 +330,7 @@ function TierRow({
             const draggable = draggables.find((d) => d.id === item)
             if (!draggable) return null
             const { id, src } = draggable
-            return <DraggableTile key={id} id={id} src={src} activeId={activeId} />
+            return <DraggableTile key={id} id={id} src={src} />
           })}
         </SortableContext>
       </div>
@@ -366,16 +359,7 @@ function TierRow({
 }
 
 //#region Draggable
-function DraggableTile({
-  id,
-  src,
-  activeId,
-}: {
-  id: string
-  src: string
-  isDragging?: boolean
-  activeId?: string
-}) {
+function DraggableTile({ id, src }: { id: string; src: string; isDragging?: boolean }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id,
   })
@@ -395,22 +379,21 @@ function DraggableTile({
       {...attributes}
       className="cursor-pointer"
     >
-      <DraggableContent src={src} draggableId={id} activeId={activeId} />
+      <DraggableContent src={src} draggableId={id} />
     </button>
   )
 }
 
 function DraggableContent({
   src,
-  activeId,
   isDragging,
   draggableId,
 }: {
   src: string
-  activeId?: string
   isDragging?: boolean
   draggableId?: string
 }) {
+  const activeId = useAtomValue(activeDraggableAtom)?.id
   return (
     <img
       src={`/src/assets/${src}`}
