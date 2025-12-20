@@ -11,9 +11,7 @@ import {
   type DragOverEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
-import { useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 import { atom, useAtom, useAtomValue } from 'jotai'
 import {
   arrayMove,
@@ -80,8 +78,6 @@ export default function TierList() {
     setActiveDraggable(activeDraggable)
   }
 
-  const wasInOuterDropZone = useRef(false)
-
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event
     if (!over || active.id === over.id) return
@@ -90,51 +86,39 @@ export default function TierList() {
     const overId = over.id as string
 
     const activeDraggable = draggables.find((d) => d.id === activeId)
+    if (!activeDraggable) return
+
+    const activeDropZoneId = activeDraggable.dz
+
+    // Check if overId is a draggable (hovering over an item)
     const overDraggable = draggables.find((d) => d.id === overId)
 
-    const activeDropZoneId = activeDraggable?.dz
+    // Determine target drop zone
+    const targetDropZoneId = overDraggable?.dz ?? overId
 
-    // Are we over a drop zone?
-    const isOverDropZone = dropZones.find((dz) => dz.id === overId)
+    if (!targetDropZoneId || activeDropZoneId === targetDropZoneId) return
 
-    const overDropZoneId = isOverDropZone ? isOverDropZone.id : overDraggable?.dz
-
-    console.log('RETURN CONDITIONS', {
-      first: !overDropZoneId,
-      second: activeDropZoneId === overDropZoneId && !isOverDropZone,
-      isOverDropZone,
-    })
-
-    console.log('ACTIVE ID:', activeDropZoneId)
-
-    // Only handle cross-zone movement here OR moving from the sortable context into the same row's dropZone
-    if (
-      !overDropZoneId ||
-      (activeDropZoneId === overDropZoneId && wasInOuterDropZone.current === !!isOverDropZone)
-    )
-      return
-
-    if (isOverDropZone) wasInOuterDropZone.current = true
-    else wasInOuterDropZone.current = false
-
-    console.log('made it past')
-
-    // Move item between drop zones in real-time
+    // Move item to new zone immediately
     setDraggables((prev) =>
-      prev.map((d) => (d.id === activeId ? { ...d, dz: overDropZoneId! } : d)),
+      prev.map((d) => (d.id === activeId ? { ...d, dz: targetDropZoneId } : d)),
     )
 
     setDropZones((prev) =>
       prev.map((dz) => {
-        const newIndex = dz.items.findIndex((item) => item === overId)
-
+        // Remove from old zone
         if (dz.id === activeDropZoneId) {
           return { ...dz, items: dz.items.filter((item) => item !== activeId) }
         }
 
-        if (dz.id === overDropZoneId && newIndex !== -1) {
-          const newItems = dz.items.toSpliced(newIndex, 0, activeId)
-          return { ...dz, items: newItems }
+        // Add to new zone
+        if (dz.id === targetDropZoneId) {
+          // If hovering over an item, insert before it
+          if (overDraggable) {
+            const insertIndex = dz.items.findIndex((item) => item === overId)
+            return { ...dz, items: dz.items.toSpliced(insertIndex, 0, activeId) }
+          }
+          // Otherwise, append to end (empty space)
+          return { ...dz, items: [...dz.items, activeId] }
         }
 
         return dz
@@ -292,22 +276,17 @@ export default function TierList() {
 // #region Tier Row
 function TierRow({
   tier,
-  activeId,
   shiftRow,
   index,
 }: {
   tier: DropZone
-  activeId?: string
   shiftRow: (direction: 'up' | 'down', index: number) => void
   index: number
 }) {
   const draggables = useAtomValue(draggablesAtom)
   const dropZones = useAtomValue(dropZonesAtom)
   const { id, title, items } = tier
-
-  const { isOver, setNodeRef } = useDroppable({
-    id,
-  })
+  const { setNodeRef } = useDroppable({ id })
 
   return (
     <div className="flex min-h-30 border-b border-foreground" ref={setNodeRef}>
@@ -319,21 +298,16 @@ function TierRow({
       >
         {title}
       </div>
-      <div
-        className={cn(
-          'flex flex-1 border-l border-foreground bg-[#333]',
-          isOver && 'animate-custom-pulse',
-        )}
-      >
-        <SortableContext id={id} items={items} strategy={horizontalListSortingStrategy}>
+      <SortableContext id={id} items={items} strategy={horizontalListSortingStrategy}>
+        <div className="flex flex-1 border-l border-foreground bg-[#333]">
           {items.map((item, index) => {
             const draggable = draggables.find((d) => d.id === item)
             if (!draggable) return null
             const { id, src } = draggable
             return <DraggableTile key={id} id={id} src={src} />
           })}
-        </SortableContext>
-      </div>
+        </div>
+      </SortableContext>
       <div className="w-24 bg-[#333] border-l border-foreground p-4 flex flex-col items-center">
         <button
           onClick={() => shiftRow('up', index)}
