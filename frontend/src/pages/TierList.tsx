@@ -11,9 +11,10 @@ import {
   type DragOverEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
-import { useMemo, useState } from 'react'
+import { useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { atom, useAtom, useAtomValue } from 'jotai'
 import {
   arrayMove,
   horizontalListSortingStrategy,
@@ -21,6 +22,8 @@ import {
   sortableKeyboardCoordinates,
   useSortable,
 } from '@dnd-kit/sortable'
+import Up from '@/assets/Up.svg?react'
+import Down from '@/assets/Down.svg?react'
 
 type Draggable = {
   id: string
@@ -34,51 +37,49 @@ type DropZone = {
   items: string[]
 }
 
+const defaultDraggables = [
+  { id: 8, src: 'GolemCard.png', dz: 2 },
+  { id: 9, src: 'MegaKnight.png', dz: 4 },
+  { id: 10, src: 'BabyDragonCard.png', dz: 5 },
+  { id: 11, src: 'BarbariansCard.png', dz: 4 },
+  { id: 12, src: 'BomberCard.png', dz: 4 },
+  { id: 13, src: 'DarkPrinceCard.png', dz: 2 },
+  { id: 14, src: 'ElixirGolemCard.png', dz: 7 },
+  { id: 15, src: 'MinerCard.png', dz: 6 },
+  { id: 16, src: 'PEKKACard.png', dz: 1 },
+  { id: 17, src: 'RagingPrinceCard.png', dz: 3 },
+  { id: 18, src: 'SkeletonsCard.png', dz: 6 },
+]
+const defaultDropZones = [
+  { id: 1, title: 'S', items: [16] },
+  { id: 2, title: 'A', items: [8, 13] },
+  { id: 3, title: 'B', items: [17] },
+  { id: 4, title: 'C', items: [9, 11, 12] },
+  { id: 5, title: 'D', items: [10] },
+  { id: 6, title: 'E', items: [15, 18] },
+  { id: 7, title: 'F', items: [14] },
+]
+
+const draggablesAtom = atom<Draggable[]>(defaultDraggables)
+const dropZonesAtom = atom<DropZone[]>(defaultDropZones)
+
 //#region Tier List
 export default function TierList() {
-  const defaultDraggables = useMemo(
-    () => [
-      { id: 8, src: 'GolemCard.png', dz: 2 },
-      { id: 9, src: 'MegaKnight.png', dz: 4 },
-      { id: 10, src: 'BabyDragonCard.png', dz: 5 },
-      { id: 11, src: 'BarbariansCard.png', dz: 4 },
-      { id: 12, src: 'BomberCard.png', dz: 4 },
-      { id: 13, src: 'DarkPrinceCard.png', dz: 2 },
-      { id: 14, src: 'ElixirGolemCard.png', dz: 7 },
-      { id: 15, src: 'MinerCard.png', dz: 6 },
-      { id: 16, src: 'PEKKACard.png', dz: 1 },
-      { id: 17, src: 'RagingPrinceCard.png', dz: 3 },
-      { id: 18, src: 'SkeletonsCard.png', dz: 6 },
-    ],
-    [],
-  )
-
-  const defaultDropZones = useMemo(
-    () => [
-      { id: 1, title: 'S', items: [16] },
-      { id: 2, title: 'A', items: [8, 13] },
-      { id: 3, title: 'B', items: [17] },
-      { id: 4, title: 'C', items: [9, 11, 12] },
-      { id: 5, title: 'D', items: [10] },
-      { id: 6, title: 'E', items: [15, 18] },
-      { id: 7, title: 'F', items: [14] },
-    ],
-    [],
-  )
-
   const [activeDraggable, setActiveDraggable] = useState<Draggable | null>(null)
 
   // State for ALL draggables
-  const [draggables, setDraggables] = useState<Draggable[]>(defaultDraggables)
+  const [draggables, setDraggables] = useAtom<Draggable[]>(draggablesAtom)
 
   // State for ALL drop zones
-  const [dropZones, setDropZones] = useState<DropZone[]>(defaultDropZones)
+  const [dropZones, setDropZones] = useAtom<DropZone[]>(dropZonesAtom)
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event
     const activeDraggable = draggables?.find((d) => d.id === active.id) ?? null
     setActiveDraggable(activeDraggable)
   }
+
+  const wasInOuterDropZone = useRef(false)
 
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event
@@ -97,9 +98,25 @@ export default function TierList() {
 
     const overDropZoneId = isOverDropZone ? isOverDropZone.id : overDraggable?.dz
 
-    console.log({ overDropZoneId, activeDropZoneId })
-    // Only handle cross-zone movement here
-    if (!overDropZoneId || activeDropZoneId === overDropZoneId) return
+    console.log('RETURN CONDITIONS', {
+      first: !overDropZoneId,
+      second: activeDropZoneId === overDropZoneId && !isOverDropZone,
+      isOverDropZone,
+    })
+
+    console.log('ACTIVE ID:', activeDropZoneId)
+
+    // Only handle cross-zone movement here OR moving from the sortable context into the same row's dropZone
+    if (
+      !overDropZoneId ||
+      (activeDropZoneId === overDropZoneId && wasInOuterDropZone.current === !!isOverDropZone)
+    )
+      return
+
+    if (isOverDropZone) wasInOuterDropZone.current = true
+    else wasInOuterDropZone.current = false
+
+    console.log('made it past')
 
     // Move item between drop zones in real-time
     setDraggables((prev) =>
@@ -110,21 +127,16 @@ export default function TierList() {
       prev.map((dz) => {
         const newIndex = dz.items.findIndex((item) => item === overId)
 
-        // Remove from old drop zone
         if (dz.id === activeDropZoneId) {
-          console.log('brothsdsder')
           return { ...dz, items: dz.items.filter((item) => item !== activeId) }
         }
 
-        // Add to new drop zone
         if (dz.id === overDropZoneId && newIndex !== -1) {
           const newItems = [...dz.items]
           newItems.splice(newIndex, 0, activeId)
-          console.log('brothe2222r')
           return { ...dz, items: newItems }
         }
 
-        console.log('brother')
         return dz
       }),
     )
@@ -216,8 +228,6 @@ export default function TierList() {
     setActiveDraggable(null)
   }
 
-  console.log(dropZones)
-
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -225,6 +235,20 @@ export default function TierList() {
     }),
   )
 
+  const shiftRow = (direction: 'up' | 'down', index: number) => {
+    const newDropZones = [...dropZones] as DropZone[]
+    if (direction === 'up')
+      [newDropZones[index], newDropZones[index - 1]] = [
+        newDropZones[index - 1],
+        newDropZones[index],
+      ]
+    else
+      [newDropZones[index], newDropZones[index + 1]] = [
+        newDropZones[index + 1],
+        newDropZones[index],
+      ]
+    setDropZones(newDropZones)
+  }
   const freeDraggables = draggables.filter((draggable) => draggable.dz === null)
 
   return (
@@ -244,12 +268,14 @@ export default function TierList() {
         sensors={sensors}
       >
         <div className="p-12">
-          {dropZones.map((tier) => (
+          {dropZones.map((tier, index) => (
             <TierRow
               key={tier.id}
               tier={tier}
               draggables={draggables}
               activeId={activeDraggable?.id}
+              shiftRow={shiftRow}
+              index={index}
             />
           ))}
         </div>
@@ -273,13 +299,17 @@ export default function TierList() {
 // #region Tier Row
 function TierRow({
   tier,
-  draggables,
   activeId,
+  shiftRow,
+  index,
 }: {
   tier: DropZone
-  draggables: Draggable[]
   activeId?: string
+  shiftRow: (direction: 'up' | 'down', index: number) => void
+  index: number
 }) {
+  const draggables = useAtomValue(draggablesAtom)
+  const dropZones = useAtomValue(dropZonesAtom)
   const { id, title, items } = tier
 
   const { isOver, setNodeRef } = useDroppable({
@@ -297,9 +327,12 @@ function TierRow({
         {title}
       </div>
       <div
-        className={cn('flex flex-1 border-l border-foreground bg-[#333]', isOver && 'bg-accent')}
+        className={cn(
+          'flex flex-1 border-l border-foreground bg-[#333]',
+          isOver && 'animate-custom-pulse',
+        )}
       >
-        <SortableContext items={items} strategy={horizontalListSortingStrategy}>
+        <SortableContext id={id} items={items} strategy={horizontalListSortingStrategy}>
           {items.map((item, index) => {
             const draggable = draggables.find((d) => d.id === item)
             if (!draggable) return null
@@ -308,7 +341,26 @@ function TierRow({
           })}
         </SortableContext>
       </div>
-      <div className="w-24 bg-[#333] border-l border-foreground p-4">UP/DOWN</div>
+      <div className="w-24 bg-[#333] border-l border-foreground p-4 flex flex-col items-center">
+        <button
+          onClick={() => shiftRow('up', index)}
+          className={clsx(
+            'cursor-pointer hover:scale-110 transition-transform duration-300',
+            index === 0 && 'opacity-50 pointer-events-none',
+          )}
+        >
+          <Up className="size-10 invert" />
+        </button>
+        <button
+          onClick={() => shiftRow('down', index)}
+          className={clsx(
+            'cursor-pointer hover:scale-110 transition-transform duration-300',
+            index === dropZones.length - 1 && 'opacity-50 pointer-events-none',
+          )}
+        >
+          <Down className="size-10 invert" />
+        </button>
+      </div>
     </div>
   )
 }
