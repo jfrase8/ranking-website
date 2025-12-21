@@ -16,6 +16,7 @@ import { atom, useAtom, useAtomValue } from 'jotai'
 import {
   arrayMove,
   horizontalListSortingStrategy,
+  rectSortingStrategy,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
@@ -35,27 +36,39 @@ type DropZone = {
   items: string[]
 }
 
-const defaultDraggables = [
-  { id: '8', src: 'GolemCard.png', dz: '2' },
-  { id: '9', src: 'MegaKnight.png', dz: '4' },
-  { id: '10', src: 'BabyDragonCard.png', dz: '5' },
-  { id: '11', src: 'BarbariansCard.png', dz: '4' },
-  { id: '12', src: 'BomberCard.png', dz: '4' },
-  { id: '13', src: 'DarkPrinceCard.png', dz: '2' },
-  { id: '14', src: 'ElixirGolemCard.png', dz: '7' },
-  { id: '15', src: 'MinerCard.png', dz: '6' },
-  { id: '16', src: 'PEKKACard.png', dz: '1' },
-  { id: '17', src: 'RagingPrinceCard.png', dz: '3' },
-  { id: '18', src: 'SkeletonsCard.png', dz: '6' },
+const images = [
+  'GolemCard.png',
+  'MegaKnight.png',
+  'BabyDragonCard.png',
+  'BarbariansCard.png',
+  'BomberCard.png',
+  'DarkPrinceCard.png',
+  'ElixirGolemCard.png',
+  'MinerCard.png',
+  'PEKKACard.png',
+  'RagingPrinceCard.png',
+  'SkeletonsCard.png',
 ]
+
+const FREE_DRAGGABLES_ID = 'free-draggables'
+
+const randomIds = Array.from({ length: images.length }, () => crypto.randomUUID())
+
+const defaultDraggables = images.map((image, index) => ({
+  id: randomIds[index],
+  src: image,
+  dz: FREE_DRAGGABLES_ID,
+}))
+
 const defaultDropZones = [
-  { id: '1', title: 'S', items: ['16'] },
-  { id: '2', title: 'A', items: ['8', '13'] },
-  { id: '3', title: 'B', items: ['17'] },
-  { id: '4', title: 'C', items: ['9', '11', '12'] },
-  { id: '5', title: 'D', items: ['10'] },
-  { id: '6', title: 'E', items: ['15', '18'] },
-  { id: '7', title: 'F', items: ['14'] },
+  { id: crypto.randomUUID(), title: 'S', items: [] },
+  { id: crypto.randomUUID(), title: 'A', items: [] },
+  { id: crypto.randomUUID(), title: 'B', items: [] },
+  { id: crypto.randomUUID(), title: 'C', items: [] },
+  { id: crypto.randomUUID(), title: 'D', items: [] },
+  { id: crypto.randomUUID(), title: 'E', items: [] },
+  { id: crypto.randomUUID(), title: 'F', items: [] },
+  { id: FREE_DRAGGABLES_ID, title: 'Free', items: defaultDraggables.map((d) => d.id) },
 ]
 
 const draggablesAtom = atom<Draggable[]>(defaultDraggables)
@@ -247,7 +260,6 @@ export default function TierList() {
       ]
     setDropZones(newDropZones)
   }
-  const freeDraggables = draggables.filter((draggable) => draggable.dz === null)
 
   return (
     <div className="flex flex-col gap-12">
@@ -266,19 +278,13 @@ export default function TierList() {
         sensors={sensors}
       >
         <div className="p-12">
-          {dropZones.map((tier, index) => (
-            <TierRow key={tier.id} tier={tier} shiftRow={shiftRow} index={index} />
-          ))}
+          {dropZones
+            .filter((tier) => tier.id !== FREE_DRAGGABLES_ID)
+            .map((tier, index) => (
+              <TierRow key={tier.id} tier={tier} shiftRow={shiftRow} index={index} />
+            ))}
         </div>
-        <div className="px-12 grid grid-cols-12">
-          <SortableContext items={freeDraggables} strategy={horizontalListSortingStrategy}>
-            {freeDraggables
-              .filter((draggable) => draggable.dz === null)
-              .map(({ id, src }) => (
-                <DraggableTile id={id} key={id} src={src} />
-              ))}
-          </SortableContext>
-        </div>
+        <FreeDraggables />
         <DragOverlay>
           {activeDraggable && <DraggableContent src={activeDraggable.src} isDragging />}
         </DragOverlay>
@@ -342,6 +348,31 @@ function TierRow({
           <Down className="size-10 invert" />
         </button>
       </div>
+    </div>
+  )
+}
+
+function FreeDraggables() {
+  const { setNodeRef } = useDroppable({ id: FREE_DRAGGABLES_ID })
+  const draggables = useAtomValue(draggablesAtom)
+  const dropZones = useAtomValue(dropZonesAtom)
+
+  const freeDraggables = dropZones.find((dz) => dz.id === FREE_DRAGGABLES_ID)?.items ?? []
+
+  return (
+    <div className="flex flex-wrap w-full px-12" ref={setNodeRef}>
+      <SortableContext
+        id={FREE_DRAGGABLES_ID}
+        items={freeDraggables}
+        strategy={rectSortingStrategy}
+      >
+        {freeDraggables.map((draggableId) => {
+          const draggable = draggables.find((d) => d.id === draggableId)
+          if (!draggable) return null
+          const { id, src } = draggable
+          return <DraggableTile id={id} key={id} src={src} />
+        })}
+      </SortableContext>
     </div>
   )
 }
