@@ -95,33 +95,47 @@ export default function TierList() {
 
     // Determine target drop zone
     const targetDropZoneId = overDraggable?.dz ?? overId
+    let isOverItem = false
 
-    if (!targetDropZoneId || activeDropZoneId === targetDropZoneId) return
+    if (overDraggable) isOverItem = true
 
-    // Move item to new zone immediately
+    if (!targetDropZoneId) return
+
+    // Skip if same zone AND same position (hovering same item)
+    if (activeDropZoneId === targetDropZoneId && isOverItem) {
+      // Check if already in correct position
+      const currentZone = dropZones.find((dz) => dz.id === targetDropZoneId)
+      const overIndex = currentZone?.items.findIndex((item) => item === overId)
+      const activeIndex = currentZone?.items.findIndex((item) => item === activeId)
+
+      if (activeIndex !== undefined && overIndex !== undefined && activeIndex === overIndex - 1)
+        return
+    }
+
+    // Move item
     setDraggables((prev) =>
       prev.map((d) => (d.id === activeId ? { ...d, dz: targetDropZoneId } : d)),
     )
 
     setDropZones((prev) =>
       prev.map((dz) => {
-        // Remove from old zone
-        if (dz.id === activeDropZoneId) {
-          return { ...dz, items: dz.items.filter((item) => item !== activeId) }
-        }
+        // Remove from current position
+        const itemsWithoutActive = dz.items.filter((item) => item !== activeId)
 
-        // Add to new zone
         if (dz.id === targetDropZoneId) {
-          // If hovering over an item, insert before it
-          if (overDraggable) {
-            const insertIndex = dz.items.findIndex((item) => item === overId)
-            return { ...dz, items: dz.items.toSpliced(insertIndex, 0, activeId) }
+          // Add to new zone
+          if (isOverItem) {
+            // Insert before the item we're hovering
+            const insertIndex = itemsWithoutActive.findIndex((item) => item === overId)
+            return { ...dz, items: itemsWithoutActive.toSpliced(insertIndex, 0, activeId) }
+          } else {
+            // Append to end (hovering empty space / container)
+            return { ...dz, items: [...itemsWithoutActive, activeId] }
           }
-          // Otherwise, append to end (empty space)
-          return { ...dz, items: [...dz.items, activeId] }
         }
 
-        return dz
+        // For other zones, just remove the active item
+        return { ...dz, items: itemsWithoutActive }
       }),
     )
   }
@@ -300,7 +314,7 @@ function TierRow({
       </div>
       <SortableContext id={id} items={items} strategy={horizontalListSortingStrategy}>
         <div className="flex flex-1 border-l border-foreground bg-[#333]">
-          {items.map((item, index) => {
+          {items.map((item) => {
             const draggable = draggables.find((d) => d.id === item)
             if (!draggable) return null
             const { id, src } = draggable
@@ -333,15 +347,16 @@ function TierRow({
 }
 
 //#region Draggable
-function DraggableTile({ id, src }: { id: string; src: string; isDragging?: boolean }) {
+function DraggableTile({ id, src }: { id: string; src: string }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id,
   })
 
   const style = transform
     ? {
-        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-        transition,
+        transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+        transition: transition || 'transform 200ms ease',
+        willChange: 'transform',
       }
     : undefined
 
@@ -374,7 +389,7 @@ function DraggableContent({
       alt="Golem"
       className="rounded-lg max-h-30 aspect-[0.833] object-cover"
       style={{
-        visibility: activeId === draggableId && !isDragging ? 'hidden' : 'visible',
+        opacity: activeId === draggableId && !isDragging ? 0 : 1,
       }}
     />
   )
