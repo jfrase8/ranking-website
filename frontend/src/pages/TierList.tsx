@@ -348,17 +348,14 @@ function TierRow({
 
 //#region Draggable
 function DraggableTile({ id, src }: { id: string; src: string }) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+  const { attributes, listeners, setNodeRef, transform, transition, isSorting } = useSortable({
     id,
   })
 
-  const style = transform
-    ? {
-        transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
-        transition: transition || 'transform 200ms ease',
-        willChange: 'transform',
-      }
-    : undefined
+  const style = {
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+    transition: transition || (isSorting ? 'transform 200ms ease' : undefined),
+  }
 
   return (
     <button
