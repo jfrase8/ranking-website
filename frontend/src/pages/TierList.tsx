@@ -309,7 +309,7 @@ function TierRow({
   const { setNodeRef } = useDroppable({ id })
 
   return (
-    <div className="flex min-h-30 border-b border-foreground" ref={setNodeRef}>
+    <div className="flex min-h-30 border-b border-foreground">
       <div
         className={clsx(
           'w-24 flex items-center justify-center text-2xl font-bold',
@@ -318,16 +318,15 @@ function TierRow({
       >
         {title}
       </div>
-      <SortableContext id={id} items={items} strategy={horizontalListSortingStrategy}>
-        <div className="flex flex-1 border-l border-foreground bg-[#333]">
+      <div className="flex flex-1 border-l border-foreground bg-[#333]" ref={setNodeRef}>
+        <SortableContext id={id} items={items} strategy={horizontalListSortingStrategy}>
           {items.map((item) => {
             const draggable = draggables.find((d) => d.id === item)
             if (!draggable) return null
-            const { id, src } = draggable
-            return <DraggableTile key={id} id={id} src={src} />
+            return <DraggableTile key={item} id={item} src={draggable.src} />
           })}
-        </div>
-      </SortableContext>
+        </SortableContext>
+      </div>
       <div className="w-24 bg-[#333] border-l border-foreground p-4 flex flex-col items-center">
         <button
           onClick={() => shiftRow('up', index)}
@@ -361,11 +360,7 @@ function FreeDraggables() {
 
   return (
     <div className="flex flex-wrap w-full px-12" ref={setNodeRef}>
-      <SortableContext
-        id={FREE_DRAGGABLES_ID}
-        items={freeDraggables}
-        strategy={rectSortingStrategy}
-      >
+      <SortableContext items={freeDraggables} strategy={rectSortingStrategy}>
         {freeDraggables.map((draggableId) => {
           const draggable = draggables.find((d) => d.id === draggableId)
           if (!draggable) return null
