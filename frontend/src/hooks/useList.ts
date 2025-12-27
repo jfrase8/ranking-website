@@ -1,13 +1,13 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { listApi } from '../api/listApi'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { listItemApi } from '../api/listApi'
 
 // Hook to fetch list items
 export const useListItems = (listId: string) => {
   return useQuery({
-    queryKey: ['list', listId],
+    queryKey: ['listItems', listId],
     queryFn: () => {
       console.log('listId', listId)
-      listApi.getListItems(listId)
+      return listItemApi.getListItems(listId)
     },
     enabled: !!listId, // Only run if listId exists
   })
@@ -18,10 +18,10 @@ export const useAddItem = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: listApi.addItem,
+    mutationFn: listItemApi.addItem,
     onSuccess: (_, variables) => {
       // Invalidate and refetch the list
-      queryClient.invalidateQueries({ queryKey: ['list', variables.listId] })
+      queryClient.invalidateQueries({ queryKey: ['listItems', variables.listId] })
     },
   })
 }
@@ -31,10 +31,10 @@ export const useRemoveItem = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: listApi.removeItem,
+    mutationFn: listItemApi.deleteItem,
     onSuccess: (_, variables) => {
       // Invalidate and refetch
-      queryClient.invalidateQueries({ queryKey: ['list', variables.listId] })
+      queryClient.invalidateQueries({ queryKey: ['listItems', variables.listId] })
     },
   })
 }

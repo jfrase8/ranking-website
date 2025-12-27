@@ -16,7 +16,8 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: !Sub "${AWS::StackName}-WebApi"
-      Handler: ranking-website::ranking_website.LambdaEntryPoint::FunctionHandlerAsync
+      # FIXED: Handler uses correct assembly name (matching your DLL) and namespace
+      Handler: ranking_website::ranking_website.LambdaEntryPoint::FunctionHandlerAsync
       Runtime: dotnet8
       MemorySize: 1024
       Timeout: 30
@@ -39,5 +40,6 @@ Resources:
 
 Outputs:
   ApiUrl:
-    Description: "Invoke URL for API Gateway"
-    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/"
+    Description: "Invoke URL for API Gateway (including default stage)"
+    # HTTP API default stage is $default
+    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/$default"

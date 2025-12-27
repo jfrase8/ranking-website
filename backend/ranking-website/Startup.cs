@@ -1,9 +1,10 @@
 ﻿using Amazon.DynamoDBv2;
-using ranking_website.Services;
 
 namespace ranking_website
 {
     using Microsoft.AspNetCore.Authentication.Negotiate;
+    using ranking_website.Services.List;
+
     public class Startup(IConfiguration configuration)
     {
         public IConfiguration Configuration { get; } = configuration;
@@ -29,7 +30,7 @@ namespace ranking_website
             services.AddAWSService<IAmazonDynamoDB>();
 
             // Register your service as Singleton (better for Lambda)
-            services.AddSingleton<IListService, DynamoDbService>();
+            services.AddSingleton<IListService, DynamoDbListService>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

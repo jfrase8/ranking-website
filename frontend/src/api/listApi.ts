@@ -1,4 +1,5 @@
 import axios from 'axios'
+import type { ListItem } from '@/pages/NumberedList'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL
 
@@ -9,9 +10,9 @@ const apiClient = axios.create({
   },
 })
 
-export const listApi = {
-  getListItems: async (listId: string) => {
-    const { data } = await apiClient.get(`/api/lists/${listId}`)
+export const listItemApi = {
+  getListItems: async (listId: string): Promise<ListItem[]> => {
+    const { data } = await apiClient.get<ListItem[]>(`/api/lists/${listId}/items`)
     console.log('data', data)
     return data
   },
@@ -22,24 +23,15 @@ export const listApi = {
   }: {
     listId: string
     itemName: string
-  }) => {
-    const { data } = await apiClient.post('/api/lists/add', {
-      listId,
+  }): Promise<ListItem> => {
+    const { data } = await apiClient.post<ListItem>(`/api/lists/${listId}/items`, {
       itemName,
     })
     return data
   },
 
-  removeItem: async ({
-    listId,
-    itemId,
-  }: {
-    listId: string
-    itemId: string
-  }) => {
-    const { data } = await apiClient.delete('/api/lists/remove', {
-      data: { listId, itemId },
-    })
+  deleteItem: async ({ listId, itemId }: { listId: string; itemId: string }) => {
+    const { data } = await apiClient.delete(`/api/lists/${listId}/items/${itemId}`)
     return data
   },
 }

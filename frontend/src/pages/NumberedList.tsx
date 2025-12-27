@@ -1,12 +1,13 @@
+import { useState } from 'react'
 import SearchList from '@/components/SearchList'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Text } from '@/components/ui/text'
 import { useAddItem, useListItems, useRemoveItem } from '@/hooks/useList'
-import { useState } from 'react'
 
 type Props = {}
 
-export type ListItem = { name: string; rank: number }
+export type ListItem = { itemName: string; rank: number; itemId: string }
 
 export default function NumberedList({}: Props) {
   const [search, setSearch] = useState('')
@@ -32,9 +33,9 @@ export default function NumberedList({}: Props) {
     }
   }
 
-  const removeItem = async (itemName: string) => {
+  const removeItem = async (itemId: string) => {
     try {
-      await removeItemMutation.mutateAsync({ listId, itemId: itemName })
+      await removeItemMutation.mutateAsync({ listId, itemId })
     } catch (err) {
       console.error('Failed to remove item:', err)
     }
@@ -44,11 +45,7 @@ export default function NumberedList({}: Props) {
     <div className="flex h-full">
       <div className="flex flex-col border border-black w-1/4 p-4 gap-4">
         <Text variant="header">Search for items to add to list</Text>
-        <Input
-          onChange={(e) => setSearch(e.target.value)}
-          value={search}
-          placeholder="Search..."
-        />
+        <Input onChange={(e) => setSearch(e.target.value)} value={search} placeholder="Search..." />
         <SearchList
           search={search}
           list={['Cow', 'Mammoth', 'Centipede', 'Lobster', 'Horse', 'Otter']}
@@ -59,16 +56,15 @@ export default function NumberedList({}: Props) {
         {isLoading ? (
           <div>Loading...</div>
         ) : (
+          currentList &&
           currentList.map((item) => (
-            <div>
-              {item.rank}. {item.name}
-            </div>
+            <Button key={item.itemId} onClick={() => removeItem(item.itemId)}>
+              {item.rank}. {item.itemName}
+            </Button>
           ))
         )}
       </div>
-      <div className="flex flex-col border border-black w-1/4 p-4">
-        Section 3 - List Details
-      </div>
+      <div className="flex flex-col border border-black w-1/4 p-4">Section 3 - List Details</div>
     </div>
   )
 }
