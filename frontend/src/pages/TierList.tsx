@@ -1,14 +1,28 @@
 import clsx from 'clsx'
 import {
   DndContext,
-  useDraggable,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
   useDroppable,
+  useSensor,
+  useSensors,
   type DragEndEvent,
   type DragOverEvent,
+  type DragStartEvent,
 } from '@dnd-kit/core'
-import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
+import { atom, useAtom, useAtomValue } from 'jotai'
+import {
+  arrayMove,
+  horizontalListSortingStrategy,
+  rectSortingStrategy,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+} from '@dnd-kit/sortable'
+import Up from '@/assets/Up.svg?react'
+import Down from '@/assets/Down.svg?react'
 
 type Draggable = {
   id: string
@@ -22,165 +36,229 @@ type DropZone = {
   items: string[]
 }
 
-export default function TierList() {
-  const defaultDraggables = useMemo(
-    () => [
-      { id: crypto.randomUUID(), src: 'GolemCard.png', dz: null },
-      { id: crypto.randomUUID(), src: 'MegaKnight.png', dz: null },
-      { id: crypto.randomUUID(), src: 'BabyDragonCard.png', dz: null },
-      { id: crypto.randomUUID(), src: 'BarbariansCard.png', dz: null },
-      { id: crypto.randomUUID(), src: 'BomberCard.png', dz: null },
-      { id: crypto.randomUUID(), src: 'DarkPrinceCard.png', dz: null },
-      { id: crypto.randomUUID(), src: 'ElixirGolemCard.png', dz: null },
-      { id: crypto.randomUUID(), src: 'MinerCard.png', dz: null },
-      { id: crypto.randomUUID(), src: 'PEKKACard.png', dz: null },
-      { id: crypto.randomUUID(), src: 'RagingPrinceCard.png', dz: null },
-      { id: crypto.randomUUID(), src: 'SkeletonsCard.png', dz: null },
-    ],
-    [],
-  )
+const images = [
+  'GolemCard.png',
+  'MegaKnight.png',
+  'BabyDragonCard.png',
+  'BarbariansCard.png',
+  'BomberCard.png',
+  'DarkPrinceCard.png',
+  'ElixirGolemCard.png',
+  'MinerCard.png',
+  'PEKKACard.png',
+  'RagingPrinceCard.png',
+  'SkeletonsCard.png',
+]
 
-  const defaultDropZones = useMemo(
-    () => [
-      { id: crypto.randomUUID(), title: 'S', items: [] },
-      { id: crypto.randomUUID(), title: 'A', items: [] },
-      { id: crypto.randomUUID(), title: 'B', items: [] },
-      { id: crypto.randomUUID(), title: 'C', items: [] },
-      { id: crypto.randomUUID(), title: 'D', items: [] },
-      { id: crypto.randomUUID(), title: 'E', items: [] },
-      { id: crypto.randomUUID(), title: 'F', items: [] },
-    ],
-    [],
-  )
+const FREE_DRAGGABLES_ID = 'free-draggables'
+
+const randomIds = Array.from({ length: images.length }, () => crypto.randomUUID())
+
+const defaultDraggables = images.map((image, index) => ({
+  id: randomIds[index],
+  src: image,
+  dz: FREE_DRAGGABLES_ID,
+}))
+
+const defaultDropZones = [
+  { id: crypto.randomUUID(), title: 'S', items: [] },
+  { id: crypto.randomUUID(), title: 'A', items: [] },
+  { id: crypto.randomUUID(), title: 'B', items: [] },
+  { id: crypto.randomUUID(), title: 'C', items: [] },
+  { id: crypto.randomUUID(), title: 'D', items: [] },
+  { id: crypto.randomUUID(), title: 'E', items: [] },
+  { id: crypto.randomUUID(), title: 'F', items: [] },
+  { id: FREE_DRAGGABLES_ID, title: 'Free', items: defaultDraggables.map((d) => d.id) },
+]
+
+const draggablesAtom = atom<Draggable[]>(defaultDraggables)
+const dropZonesAtom = atom<DropZone[]>(defaultDropZones)
+const activeDraggableAtom = atom<Draggable | null>(null)
+
+//#region Tier List
+export default function TierList() {
+  const [activeDraggable, setActiveDraggable] = useAtom<Draggable | null>(activeDraggableAtom)
 
   // State for ALL draggables
-  const [draggables, setDraggables] = useState<Draggable[]>(defaultDraggables)
+  const [draggables, setDraggables] = useAtom<Draggable[]>(draggablesAtom)
 
   // State for ALL drop zones
-  const [dropZones, setDropZones] = useState<DropZone[]>(defaultDropZones)
+  const [dropZones, setDropZones] = useAtom<DropZone[]>(dropZonesAtom)
 
-  // Track the current drag over position for reordering
-  const [dragOverPosition, setDragOverPosition] = useState<{
-    tierId: string
-    index: number
-  } | null>(null)
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event
+    const activeDraggable = draggables?.find((d) => d.id === active.id) ?? null
+    setActiveDraggable(activeDraggable)
+  }
 
   const handleDragOver = (event: DragOverEvent) => {
-    if (!event.over?.id) {
-      setDragOverPosition(null)
-      return
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const activeId = active.id as string
+    const overId = over.id as string
+
+    const activeDraggable = draggables.find((d) => d.id === activeId)
+    if (!activeDraggable) return
+
+    const activeDropZoneId = activeDraggable.dz
+
+    // Check if overId is a draggable (hovering over an item)
+    const overDraggable = draggables.find((d) => d.id === overId)
+
+    // Determine target drop zone
+    const targetDropZoneId = overDraggable?.dz ?? overId
+    let isOverItem = false
+
+    if (overDraggable) isOverItem = true
+
+    if (!targetDropZoneId) return
+
+    // Skip if same zone AND same position (hovering same item)
+    if (activeDropZoneId === targetDropZoneId && isOverItem) {
+      // Check if already in correct position
+      const currentZone = dropZones.find((dz) => dz.id === targetDropZoneId)
+      const overIndex = currentZone?.items.findIndex((item) => item === overId)
+      const activeIndex = currentZone?.items.findIndex((item) => item === activeId)
+
+      if (activeIndex !== undefined && overIndex !== undefined && activeIndex === overIndex - 1)
+        return
     }
 
-    const overId = String(event.over.id)
+    // Move item
+    setDraggables((prev) =>
+      prev.map((d) => (d.id === activeId ? { ...d, dz: targetDropZoneId } : d)),
+    )
 
-    // Check if we're over a position-based drop zone (format: tier-${tierId}-pos-${index})
-    const positionMatch = overId.match(/^tier-(.+)-pos-(\d+)$/)
-    if (positionMatch) {
-      const [, tierId, indexStr] = positionMatch
-      setDragOverPosition({ tierId, index: parseInt(indexStr, 10) })
-      return
-    }
+    setDropZones((prev) =>
+      prev.map((dz) => {
+        // Remove from current position
+        const itemsWithoutActive = dz.items.filter((item) => item !== activeId)
 
-    // Check if we're over a tier row itself
-    const tierMatch = dropZones.find((dz) => dz.id === overId)
-    if (tierMatch) {
-      // If tier is empty or we're at the end, set position to the end
-      setDragOverPosition({
-        tierId: tierMatch.id,
-        index: tierMatch.items.length,
-      })
-      return
-    }
+        if (dz.id === targetDropZoneId) {
+          // Add to new zone
+          if (isOverItem) {
+            // Insert before the item we're hovering
+            const insertIndex = itemsWithoutActive.findIndex((item) => item === overId)
+            return { ...dz, items: itemsWithoutActive.toSpliced(insertIndex, 0, activeId) }
+          } else {
+            // Append to end (hovering empty space / container)
+            return { ...dz, items: [...itemsWithoutActive, activeId] }
+          }
+        }
 
-    setDragOverPosition(null)
+        // For other zones, just remove the active item
+        return { ...dz, items: itemsWithoutActive }
+      }),
+    )
   }
 
   const handleDragEnd = (event: DragEndEvent) => {
-    // Find which tier we're hovering over
-    if (!event.over?.id) {
-      setDragOverPosition(null)
-      return
-    }
+    const { active, over } = event
+    if (!over || !event?.over?.id || active.id === over.id) return setActiveDraggable(null)
 
-    const overId = String(event.over.id)
-    const draggableId = String(event.active.id)
+    const activeId = event.active.id as string
+    const overId = event.over.id as string
 
-    let targetTierId: string | null = null
-    let insertIndex: number | null = null
+    const activeDraggable = draggables.find((d) => d.id === activeId)
+    const draggableOver = draggables.find((dz) => dz.id === overId)
 
-    // Check if we're over a position-based drop zone
-    const positionMatch = overId.match(/^tier-(.+)-pos-(\d+)$/)
-    if (positionMatch) {
-      const [, tierId, indexStr] = positionMatch
-      targetTierId = tierId
-      insertIndex = parseInt(indexStr, 10)
-    } else {
-      // Check if we're over a tier row itself
-      const tier = dropZones.find((dz) => dz.id === overId)
-      if (tier) {
-        targetTierId = tier.id
-        insertIndex = tier.items.length
-      } else {
-        setDragOverPosition(null)
-        return
-      }
-    }
+    // The draggable's old drop zone ID before it was moved
+    const oldDropZoneId = activeDraggable?.dz
 
-    if (!targetTierId || insertIndex === null) {
-      setDragOverPosition(null)
-      return
-    }
+    // Are we over a drop zone?
+    const isOverDropZone = dropZones.some((dz) => dz.id === overId)
 
-    // Find the source tier (where the draggable currently is)
-    const sourceTier = dropZones.find((dz) => dz.items.includes(draggableId))
-    const sourceIndex = sourceTier?.items.indexOf(draggableId) ?? -1
-
-    // Update dropZones
-    setDropZones((prev) =>
-      prev.map((dz) => {
-        if (dz.id === targetTierId) {
-          // Target tier: insert at the specified position
-          const itemsWithoutDraggable = dz.items.filter(
-            (item) => item !== draggableId,
-          )
-
-          // Adjust insert index if we're moving within the same tier
-          let adjustedIndex = insertIndex
-          if (
-            sourceTier?.id === targetTierId &&
-            sourceIndex !== -1 &&
-            sourceIndex < insertIndex
-          ) {
-            adjustedIndex = insertIndex - 1
-          }
-
-          const newItems = [
-            ...itemsWithoutDraggable.slice(0, adjustedIndex),
-            draggableId,
-            ...itemsWithoutDraggable.slice(adjustedIndex),
-          ]
-
-          return {
-            ...dz,
-            items: newItems,
-          }
-        } else if (dz.id === sourceTier?.id && dz.id !== targetTierId) {
-          // Source tier (different from target): remove the draggable
-          return {
-            ...dz,
-            items: dz.items.filter((item) => item !== draggableId),
-          }
-        }
-        return dz
-      }),
+    // Find the drop zone we're over
+    // If we're hovering a drop zone, use that ID, otherwise use the OVER draggable's drop zone ID
+    const dropZoneOver = dropZones.find(
+      (dz) => dz.id === (isOverDropZone ? overId : draggableOver?.dz),
     )
 
-    // Update draggables
-    setDraggables((prev) =>
-      prev.map((d) => (d.id === draggableId ? { ...d, dz: targetTierId } : d)),
-    )
+    // Rearranging items within the same drop zone
+    if (oldDropZoneId === dropZoneOver?.id) {
+      setDropZones((prev) =>
+        prev.map((dz) => {
+          const oldIndex = dz.items.findIndex((item) => item === activeId)
+          const newIndex = dz.items.findIndex((item) => item === overId)
+          if (oldIndex === newIndex) return dz
+          const newItems = arrayMove(dz.items, oldIndex, newIndex)
+          return { ...dz, items: newItems }
+        }),
+      )
+    }
 
-    setDragOverPosition(null)
+    // Draggable moved from one sortable context to another
+    if (draggableOver?.dz && draggableOver?.dz !== activeDraggable?.dz) {
+      setDraggables((prev) =>
+        prev.map((d) => (d.id === activeId ? { ...d, dz: dropZoneOver!.id } : d)),
+      )
+      setDropZones((prev) =>
+        prev.map((dz) => {
+          const newIndex = dz.items.findIndex((item) => item === overId)
+
+          // Remove draggable from its old drop zone
+          if (dz.id === oldDropZoneId) {
+            const newItems = dz.items.filter((item) => item !== activeId)
+            return { ...dz, items: newItems }
+          }
+
+          // Add draggable to its new drop zone
+          if (newIndex === -1) return dz
+          const newItems = dz.items.toSpliced(newIndex, 0, activeId)
+          return { ...dz, items: newItems }
+        }),
+      )
+    }
+
+    // Moving a draggable into a new drop zone (outside of the sortable context, at the end of the list)
+    if (isOverDropZone) {
+      setDraggables((prev) =>
+        prev.map((d) => (d.id === activeId ? { ...d, dz: dropZoneOver!.id } : d)),
+      )
+      setDropZones((prev) =>
+        prev.map((dz) => {
+          // Remove draggable from its old drop zone
+          if (dz.id === oldDropZoneId && dropZoneOver?.id !== oldDropZoneId) {
+            const newItems = dz.items.filter((item) => item !== activeId)
+            return { ...dz, items: newItems }
+          }
+
+          // If we dropped it at the end of the dropzone it was already in
+          if (dz.id === dropZoneOver?.id && dropZoneOver?.id === oldDropZoneId) {
+            const newItems = dz.items.filter((item) => item !== activeId)
+            newItems.push(activeId)
+            return { ...dz, items: newItems }
+          }
+
+          return dz.id === dropZoneOver?.id ? { ...dz, items: [...dz.items, activeId] } : dz
+        }),
+      )
+    }
+
+    setActiveDraggable(null)
+  }
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  )
+
+  const shiftRow = (direction: 'up' | 'down', index: number) => {
+    const newDropZones = [...dropZones] as DropZone[]
+    if (direction === 'up')
+      [newDropZones[index], newDropZones[index - 1]] = [
+        newDropZones[index - 1],
+        newDropZones[index],
+      ]
+    else
+      [newDropZones[index], newDropZones[index + 1]] = [
+        newDropZones[index + 1],
+        newDropZones[index],
+      ]
+    setDropZones(newDropZones)
   }
 
   return (
@@ -193,48 +271,45 @@ export default function TierList() {
       >
         Reset
       </Button>
-      <DndContext onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
+      <DndContext
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+        sensors={sensors}
+      >
         <div className="p-12">
-          {dropZones.map((tier) => (
-            <TierRow
-              key={tier.id}
-              tier={tier}
-              draggables={draggables}
-              dragOverPosition={dragOverPosition}
-            />
-          ))}
-        </div>
-        <div className="px-12 grid grid-cols-12">
-          {draggables
-            .filter((draggable) => draggable.dz === null)
-            .map(({ id, src }) => (
-              <DraggableTile id={id} key={id} src={src} />
+          {dropZones
+            .filter((tier) => tier.id !== FREE_DRAGGABLES_ID)
+            .map((tier, index) => (
+              <TierRow key={tier.id} tier={tier} shiftRow={shiftRow} index={index} />
             ))}
         </div>
+        <FreeDraggables />
+        <DragOverlay>
+          {activeDraggable && <DraggableContent src={activeDraggable.src} isDragging />}
+        </DragOverlay>
       </DndContext>
     </div>
   )
 }
 
+// #region Tier Row
 function TierRow({
   tier,
-  draggables,
-  dragOverPosition,
+  shiftRow,
+  index,
 }: {
   tier: DropZone
-  draggables: Draggable[]
-  dragOverPosition: { tierId: string; index: number } | null
+  shiftRow: (direction: 'up' | 'down', index: number) => void
+  index: number
 }) {
+  const draggables = useAtomValue(draggablesAtom)
+  const dropZones = useAtomValue(dropZonesAtom)
   const { id, title, items } = tier
-  const { isOver, setNodeRef } = useDroppable({
-    id,
-  })
-
-  const isThisTierActive =
-    dragOverPosition?.tierId === id && dragOverPosition !== null
+  const { setNodeRef } = useDroppable({ id })
 
   return (
-    <div className="flex min-h-20 border-b border-foreground" ref={setNodeRef}>
+    <div className="flex min-h-30 border-b border-foreground">
       <div
         className={clsx(
           'w-24 flex items-center justify-center text-2xl font-bold',
@@ -243,66 +318,103 @@ function TierRow({
       >
         {title}
       </div>
-      <div
-        className={cn(
-          'flex flex-1 bg-secondary border-l border-foreground',
-          isOver && !isThisTierActive ? 'bg-accent/50' : undefined,
-        )}
-      >
-        {/* Drop zone at the start of the list */}
-        <PositionDropZone
-          positionId={`tier-${id}-pos-0`}
-          isActive={isThisTierActive && dragOverPosition.index === 0}
-        />
-        {/* Render items with drop zones between them */}
-        {items.map((item, index) => {
-          const draggable = draggables.find((d) => d.id === item)
-          if (!draggable) return null
-
-          return (
-            <div key={draggable.id} className="flex items-center">
-              <DraggableTile id={draggable.id} src={draggable.src} />
-              {/* Drop zone after this item */}
-              <PositionDropZone
-                positionId={`tier-${id}-pos-${index + 1}`}
-                isActive={
-                  isThisTierActive && dragOverPosition.index === index + 1
-                }
-              />
-            </div>
-          )
-        })}
+      <div className="flex flex-1 border-l border-foreground bg-[#333]" ref={setNodeRef}>
+        <SortableContext id={id} items={items} strategy={horizontalListSortingStrategy}>
+          {items.map((item) => {
+            const draggable = draggables.find((d) => d.id === item)
+            if (!draggable) return null
+            return <DraggableTile key={item} id={item} src={draggable.src} />
+          })}
+        </SortableContext>
       </div>
-      <div className="w-24 bg-secondary border-l border-foreground p-4">
-        UP/DOWN
+      <div className="w-24 bg-[#333] border-l border-foreground p-4 flex flex-col items-center">
+        <button
+          onClick={() => shiftRow('up', index)}
+          className={clsx(
+            'cursor-pointer hover:scale-110 transition-transform duration-300',
+            index === 0 && 'opacity-50 pointer-events-none',
+          )}
+        >
+          <Up className="size-10 invert" />
+        </button>
+        <button
+          onClick={() => shiftRow('down', index)}
+          className={clsx(
+            'cursor-pointer hover:scale-110 transition-transform duration-300',
+            index === dropZones.length - 1 && 'opacity-50 pointer-events-none',
+          )}
+        >
+          <Down className="size-10 invert" />
+        </button>
       </div>
     </div>
   )
 }
 
-function PositionDropZone({
-  positionId,
-  isActive,
-}: {
-  positionId: string
-  isActive: boolean
-}) {
-  const { setNodeRef, isOver } = useDroppable({
-    id: positionId,
-  })
+function FreeDraggables() {
+  const { setNodeRef } = useDroppable({ id: FREE_DRAGGABLES_ID })
+  const draggables = useAtomValue(draggablesAtom)
+  const dropZones = useAtomValue(dropZonesAtom)
+
+  const freeDraggables = dropZones.find((dz) => dz.id === FREE_DRAGGABLES_ID)?.items ?? []
 
   return (
-    <div
-      ref={setNodeRef}
-      className={cn(
-        'w-3 min-w-3 h-full transition-all shrink-0 flex items-center justify-center',
-        isActive || isOver ? 'bg-primary/50' : 'bg-transparent',
-      )}
-    >
-      {(isActive || isOver) && (
-        <div className="w-full h-1 bg-primary rounded-full" />
-      )}
+    <div className="flex flex-wrap w-full px-12" ref={setNodeRef}>
+      <SortableContext items={freeDraggables} strategy={rectSortingStrategy}>
+        {freeDraggables.map((draggableId) => {
+          const draggable = draggables.find((d) => d.id === draggableId)
+          if (!draggable) return null
+          const { id, src } = draggable
+          return <DraggableTile id={id} key={id} src={src} />
+        })}
+      </SortableContext>
     </div>
+  )
+}
+
+//#region Draggable
+function DraggableTile({ id, src }: { id: string; src: string }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isSorting } = useSortable({
+    id,
+  })
+
+  const style = {
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+    transition: transition || (isSorting ? 'transform 200ms ease' : undefined),
+  }
+
+  return (
+    <button
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      className="cursor-pointer"
+    >
+      <DraggableContent src={src} draggableId={id} />
+    </button>
+  )
+}
+
+function DraggableContent({
+  src,
+  isDragging,
+  draggableId,
+}: {
+  src: string
+  isDragging?: boolean
+  draggableId?: string
+}) {
+  const activeId = useAtomValue(activeDraggableAtom)?.id
+  return (
+    <img
+      src={`/src/assets/${src}`}
+      alt="Golem"
+      className="rounded-lg max-h-30 aspect-[0.833] object-cover"
+      style={{
+        opacity: activeId === draggableId && !isDragging ? 0 : 1,
+      }}
+    />
   )
 }
 
@@ -314,32 +426,4 @@ const tierColors: Record<string, string> = {
   D: 'bg-blue-500',
   E: 'bg-indigo-500',
   F: 'bg-purple-500',
-}
-
-function DraggableTile({ id, src }: { id: string; src: string }) {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
-    id,
-  })
-
-  const style = transform
-    ? {
-        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-      }
-    : undefined
-
-  return (
-    <button
-      ref={setNodeRef}
-      style={style}
-      {...listeners}
-      {...attributes}
-      className="rounded-lg max-h-30 aspect-[0.833] cursor-pointer"
-    >
-      <img
-        src={`/src/assets/${src}`}
-        alt="Golem"
-        className="size-full object-cover"
-      />
-    </button>
-  )
 }
