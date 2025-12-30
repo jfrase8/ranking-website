@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
+import Plus from '@/assets/Plus.svg?react'
 
 export const Route = createFileRoute('/ranking/tier-list/')({
   component: TierListHome,
@@ -10,6 +11,9 @@ function TierListHome() {
       {images.map((image, index) => (
         <TierListCard key={image} id={index} image={image} />
       ))}
+      <button className="border border-green-500 rounded-lg p-4 max-h-80 aspect-[0.833] object-cover transition-transform duration-300 hover:scale-105 cursor-pointer">
+        <Plus className="size-full text-green-500" />
+      </button>
     </div>
   )
 }
