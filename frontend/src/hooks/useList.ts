@@ -1,14 +1,29 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { listItemApi } from '../api/listApi'
+import { listApi, listItemApi } from '../api/listApi'
+
+// Hook to fetch all of a user's lists
+export const useLists = (userId: string) => {
+  return useQuery({
+    queryKey: ['lists', userId],
+    queryFn: () => listApi.getUserLists(userId),
+    enabled: !!userId, // Only run if userId exists
+  })
+}
+
+// Hook to fetch list data
+export const useListData = (listId: string) => {
+  return useQuery({
+    queryKey: ['listData', listId],
+    queryFn: () => listApi.getListData(listId),
+    enabled: !!listId, // Only run if listId exists
+  })
+}
 
 // Hook to fetch list items
 export const useListItems = (listId: string) => {
   return useQuery({
     queryKey: ['listItems', listId],
-    queryFn: () => {
-      console.log('listId', listId)
-      return listItemApi.getListItems(listId)
-    },
+    queryFn: () => listItemApi.getListItems(listId),
     enabled: !!listId, // Only run if listId exists
   })
 }

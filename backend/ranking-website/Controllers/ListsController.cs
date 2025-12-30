@@ -12,6 +12,23 @@ namespace ranking_website.Controllers
     {
         private readonly IListService _listService = listService;
 
+        // GET /api/lists?userId={userId} - Get all the lists from a user
+        [HttpGet]
+        public async Task<ActionResult<List<List>>> GetListItems(string userId)
+        {
+            try
+            {
+                var lists = await _listService.GetUserListsAsync(userId);
+                // TODO: Add lastEdited date to list so they can be sorted
+                //List<List> sortedItems = [.. items.OrderBy(item => item.Rank)];
+                return Ok(lists);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error retrieving user's lists: {ex.Message}");
+            }
+        }
+
         // GET /api/lists/{listId} - Get list metadata
         [HttpGet("{listId}")]
         public async Task<ActionResult<List>> GetList(string listId)
