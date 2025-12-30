@@ -12,6 +12,7 @@ import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useForm, type SubmitHandler } from 'react-hook-form'
+import { Label } from '@/components/ui/label'
 
 export const Route = createFileRoute('/ranking/tier-list/')({
   component: TierListHome,
@@ -80,7 +81,8 @@ function AddTierListModal({ open, setOpen }: { open: boolean; setOpen: (open: bo
             <DialogTitle>Create new tier list</DialogTitle>
             <DialogDescription>This will create a new tier list.</DialogDescription>
           </DialogHeader>
-          <Input type="text" placeholder="Tier list name" {...register('name')} />
+          <Label htmlFor="name">Title</Label>
+          <Input id="name" type="text" placeholder="Tier list name" {...register('name')} />
           <DialogFooter>
             <Button type="submit">Create</Button>
           </DialogFooter>
