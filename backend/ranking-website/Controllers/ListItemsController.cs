@@ -19,7 +19,8 @@ namespace ranking_website.Controllers
             try
             {
                 var items = await _listService.GetListItemsAsync(listId);
-                return Ok(items);
+                List<ListItem> sortedItems = [..items.OrderBy(item => item.Rank)];
+                return Ok(sortedItems);
             }
             catch (Exception ex)
             {
@@ -47,13 +48,13 @@ namespace ranking_website.Controllers
             }
         }
 
-        // DELETE /api/lists/{listId}/items/{itemId} - Remove item from list
+        // DELETE /api/lists/{listId}/items/{itemId} - Delete item from list
         [HttpDelete("{itemId}")]
-        public async Task<ActionResult> RemoveItem(string listId, string itemId)
+        public async Task<ActionResult> DeleteItem(string listId, string itemId)
         {
             try
             {
-                var success = await _listService.RemoveItemAsync(listId, itemId);
+                var success = await _listService.DeleteItemAsync(listId, itemId);
                 if (!success)
                 {
                     return NotFound($"Item {itemId} not found in list {listId}");

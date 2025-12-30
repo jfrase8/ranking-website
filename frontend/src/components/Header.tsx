@@ -33,11 +33,7 @@ export default function Header() {
           <Menu />
         </Button>
         <h1 className="ml-4 text-xl font-semibold">
-          <Button
-            size="lg"
-            variant="ghost"
-            onClick={() => navigate({ to: '/' })}
-          >
+          <Button size="lg" variant="ghost" onClick={() => navigate({ to: '/' })}>
             Ranking Website
           </Button>
         </h1>
@@ -64,7 +60,10 @@ export default function Header() {
           {navItems.map(({ href, label, icon }) => (
             <Button
               variant="ghost"
-              onClick={() => navigate({ to: href })}
+              onClick={() => {
+                navigate({ to: href })
+                setIsOpen(false)
+              }}
               className="justify-start py-6"
             >
               {label}

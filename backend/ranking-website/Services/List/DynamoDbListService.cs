@@ -2,6 +2,7 @@
 using Amazon.DynamoDBv2.DocumentModel;
 using Amazon.DynamoDBv2.Model;
 using ranking_website.Models.List;
+using System.Collections.Generic;
 
 namespace ranking_website.Services.List
 {
@@ -12,16 +13,38 @@ namespace ranking_website.Services.List
         private const string ListItemsTableName = "ListItems";
 
         // ==================== List Operations ====================
+        public async Task<List<Models.List.List?>> GetUserListsAsync(string userId)
+        {
+            var request = new QueryRequest
+            {
+                TableName = ListsTableName,
+                KeyConditionExpression = "UserId = :userId",
+                ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+                {
+                    { ":userId", new AttributeValue { S = userId } }
+                }
+            };
 
+            var response = await _dynamoDb.QueryAsync(request);
+
+            return [.. response.Items.Select(item => new Models.List.List
+            {
+                Id = item["Id"].S,
+                Name = item["Name"].S,
+                UserId = item["UserId"].S,
+                Description = item.TryGetValue("Description", out AttributeValue? value) ? value.S : null,
+                CreatedAt = DateTime.Parse(item["CreatedAt"].S)
+            })];
+        }
         public async Task<Models.List.List?> GetListAsync(string listId)
         {
             var request = new GetItemRequest
             {
                 TableName = ListsTableName,
                 Key = new Dictionary<string, AttributeValue>
-            {
-                { "Id", new AttributeValue { S = listId } }
-            }
+                {
+                    { "Id", new AttributeValue { S = listId } }
+                }
             };
 
             var response = await _dynamoDb.GetItemAsync(request);
@@ -56,12 +79,13 @@ namespace ranking_website.Services.List
             {
                 TableName = ListsTableName,
                 Item = new Dictionary<string, AttributeValue>
-            {
-                { "Id", new AttributeValue { S = list.Id } },
-                { "Name", new AttributeValue { S = list.Name } },
-                { "UserId", new AttributeValue { S = list.UserId } },
-                { "CreatedAt", new AttributeValue { S = list.CreatedAt.ToString("o") } }
-            }
+                {
+                    { "Id", new AttributeValue { S = list.Id } },
+                    { "Name", new AttributeValue { S = list.Name } },
+                    { "UserId", new AttributeValue { S = list.UserId } },
+                    { "Description", new AttributeValue { S = list.Description }  },
+                    { "CreatedAt", new AttributeValue { S = list.CreatedAt.ToString("o") } }
+                }
             };
 
             if (!string.IsNullOrEmpty(list.Description))
@@ -109,9 +133,9 @@ namespace ranking_website.Services.List
             {
                 TableName = ListsTableName,
                 Key = new Dictionary<string, AttributeValue>
-            {
-                { "Id", new AttributeValue { S = listId } }
-            },
+                {
+                    { "Id", new AttributeValue { S = listId } }
+                },
                 UpdateExpression = "SET " + string.Join(", ", updateExpression),
                 ExpressionAttributeNames = expressionAttributeNames,
                 ExpressionAttributeValues = expressionAttributeValues,
@@ -136,7 +160,7 @@ namespace ranking_website.Services.List
             var items = await GetListItemsAsync(listId);
             foreach (var item in items)
             {
-                await RemoveItemAsync(listId, item.Id);
+                await DeleteItemAsync(listId, item.Id);
             }
 
             // Then delete the list itself
@@ -144,9 +168,9 @@ namespace ranking_website.Services.List
             {
                 TableName = ListsTableName,
                 Key = new Dictionary<string, AttributeValue>
-            {
-                { "Id", new AttributeValue { S = listId } }
-            }
+                {
+                    { "Id", new AttributeValue { S = listId } }
+                }
             };
 
             var response = await _dynamoDb.DeleteItemAsync(request);
@@ -162,9 +186,9 @@ namespace ranking_website.Services.List
                 TableName = ListItemsTableName,
                 KeyConditionExpression = "ListId = :listId",
                 ExpressionAttributeValues = new Dictionary<string, AttributeValue>
-            {
-                { ":listId", new AttributeValue { S = listId } }
-            }
+                {
+                    { ":listId", new AttributeValue { S = listId } }
+                }
             };
 
             var response = await _dynamoDb.QueryAsync(request);
@@ -198,13 +222,13 @@ namespace ranking_website.Services.List
             {
                 TableName = ListItemsTableName,
                 Item = new Dictionary<string, AttributeValue>
-            {
-                { "ListId", new AttributeValue { S = item.ListId } },
-                { "ItemId", new AttributeValue { S = item.Id } },
-                { "ItemName", new AttributeValue { S = item.Name } },
-                { "Rank", new AttributeValue { N = item.Rank.ToString() } },
-                { "CreatedAt", new AttributeValue { S = item.CreatedAt.ToString("o") } }
-            }
+                {
+                    { "ListId", new AttributeValue { S = item.ListId } },
+                    { "ItemId", new AttributeValue { S = item.Id } },
+                    { "ItemName", new AttributeValue { S = item.Name } },
+                    { "Rank", new AttributeValue { N = item.Rank.ToString() } },
+                    { "CreatedAt", new AttributeValue { S = item.CreatedAt.ToString("o") } }
+                }
             };
 
             await _dynamoDb.PutItemAsync(request);
@@ -255,20 +279,63 @@ namespace ranking_website.Services.List
             return await GetListItemsAsync(listId);
         }
 
-        public async Task<bool> RemoveItemAsync(string listId, string itemId)
+        public async Task<bool> DeleteItemAsync(string listId, string itemId)
         {
-            var request = new DeleteItemRequest
+            // First, get the item being deleted to know its rank
+            var allItems = await GetListItemsAsync(listId);
+            var itemToDelete = allItems.FirstOrDefault(i => i.Id == itemId);
+
+            if (itemToDelete == null)
+            {
+                return false; // Item not found
+            }
+
+            // Delete the item
+            var deleteRequest = new DeleteItemRequest
             {
                 TableName = ListItemsTableName,
                 Key = new Dictionary<string, AttributeValue>
-            {
-                { "ListId", new AttributeValue { S = listId } },
-                { "ItemId", new AttributeValue { S = itemId } }
-            }
+                {
+                    { "ListId", new AttributeValue { S = listId } },
+                    { "ItemId", new AttributeValue { S = itemId } }
+                }
             };
 
-            var response = await _dynamoDb.DeleteItemAsync(request);
-            return response.HttpStatusCode == System.Net.HttpStatusCode.OK;
+            var deleteResponse = await _dynamoDb.DeleteItemAsync(deleteRequest);
+
+            if (deleteResponse.HttpStatusCode != System.Net.HttpStatusCode.OK)
+            {
+                return false;
+            }
+
+            // Shift ranks for all items that came after the deleted item
+            var itemsToUpdate = allItems.Where(i => i.Rank > itemToDelete.Rank).ToList();
+
+            foreach (var item in itemsToUpdate)
+            {
+                var updateRequest = new UpdateItemRequest
+                {
+                    TableName = ListItemsTableName,
+                    Key = new Dictionary<string, AttributeValue>
+                    {
+                        { "ListId", new AttributeValue { S = listId } },
+                        { "ItemId", new AttributeValue { S = item.Id } }
+                    },
+                    UpdateExpression = "SET #rank = :rank",
+                    ExpressionAttributeNames = new Dictionary<string, string>
+                    {
+                        { "#rank", "Rank" }
+                    },
+                    ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+                    {
+                        { ":rank", new AttributeValue { N = (item.Rank - 1).ToString() } }
+                    }
+                };
+
+                await _dynamoDb.UpdateItemAsync(updateRequest);
+            }
+
+            return true;
         }
     }
     }
