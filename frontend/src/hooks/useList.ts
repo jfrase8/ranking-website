@@ -7,6 +7,7 @@ export const useLists = (userId: string) => {
     queryKey: ['lists', userId],
     queryFn: () => listApi.getUserLists(userId),
     enabled: !!userId, // Only run if userId exists
+    refetchOnWindowFocus: false,
   })
 }
 
