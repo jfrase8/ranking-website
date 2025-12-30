@@ -7,18 +7,18 @@ export const Route = createFileRoute('/ranking/tier-list/')({
 function TierListHome() {
   return (
     <div className="grid grid-cols-4 gap-8">
-      {images.map((image) => (
-        <TierListCard key={image} image={image} />
+      {images.map((image, index) => (
+        <TierListCard key={image} id={index} image={image} />
       ))}
     </div>
   )
 }
 
-function TierListCard({ image }: { image: string }) {
+function TierListCard({ id, image }: { id: number; image: string }) {
   return (
     <Link
       to="/ranking/tier-list/$id"
-      params={{ id: '1' }}
+      params={{ id: id.toString() }}
       className="bg-green-500 rounded-lg p-4 max-h-80 aspect-[0.833] object-cover transition-transform duration-300 hover:scale-105"
     >
       <img src={`/src/assets/${image}`} alt={image} className="w-full h-full object-cover" />
