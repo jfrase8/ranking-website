@@ -1,0 +1,41 @@
+import { createFileRoute, Link } from '@tanstack/react-router'
+
+export const Route = createFileRoute('/ranking/tier-list/')({
+  component: TierListHome,
+})
+
+function TierListHome() {
+  return (
+    <div className="grid grid-cols-4 gap-8">
+      {images.map((image) => (
+        <TierListCard key={image} image={image} />
+      ))}
+    </div>
+  )
+}
+
+function TierListCard({ image }: { image: string }) {
+  return (
+    <Link
+      to="/ranking/tier-list/$id"
+      params={{ id: '1' }}
+      className="bg-green-500 rounded-lg p-4 max-h-80 aspect-[0.833] object-cover transition-transform duration-300 hover:scale-105"
+    >
+      <img src={`/src/assets/${image}`} alt={image} className="w-full h-full object-cover" />
+    </Link>
+  )
+}
+
+const images = [
+  'GolemCard.png',
+  'MegaKnight.png',
+  'BabyDragonCard.png',
+  'BarbariansCard.png',
+  'BomberCard.png',
+  'DarkPrinceCard.png',
+  'ElixirGolemCard.png',
+  'MinerCard.png',
+  'PEKKACard.png',
+  'RagingPrinceCard.png',
+  'SkeletonsCard.png',
+]
