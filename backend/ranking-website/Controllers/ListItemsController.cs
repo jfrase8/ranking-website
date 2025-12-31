@@ -34,12 +34,12 @@ namespace ranking_website.Controllers
         {
             try
             {
-                if (string.IsNullOrEmpty(request.ItemName))
+                if (string.IsNullOrEmpty(request.Name))
                 {
-                    return BadRequest("ItemName is required");
+                    return BadRequest("Name is required");
                 }
 
-                var item = await _listService.AddItemAsync(listId, request.ItemName);
+                var item = await _listService.AddItemAsync(listId, request.Name);
                 return CreatedAtAction(nameof(GetListItems), new { listId }, item);
             }
             catch (Exception ex)

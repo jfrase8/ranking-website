@@ -65,6 +65,7 @@ export default function Header() {
                 setIsOpen(false)
               }}
               className="justify-start py-6"
+              key={href}
             >
               {label}
             </Button>

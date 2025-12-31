@@ -3,4 +3,5 @@ export type ListItem = {
   rank: number
   id: string
   listId: string
+  createdAt: string
 }

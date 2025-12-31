@@ -33,6 +33,7 @@ namespace ranking_website.Services.List
                 Name = item["Name"].S,
                 UserId = item["UserId"].S,
                 Description = item.TryGetValue("Description", out AttributeValue? value) ? value.S : null,
+                Privacy = item["Privacy"].S,
                 CreatedAt = DateTime.Parse(item["CreatedAt"].S)
             })];
         }
@@ -60,6 +61,7 @@ namespace ranking_website.Services.List
                 Name = response.Item["Name"].S,
                 UserId = response.Item["UserId"].S,
                 Description = response.Item.TryGetValue("Description", out AttributeValue? value) ? value.S : null,
+                Privacy = response.Item["Privacy"].S,
                 CreatedAt = DateTime.Parse(response.Item["CreatedAt"].S)
             };
         }
@@ -72,6 +74,7 @@ namespace ranking_website.Services.List
                 Name = request.Name,
                 UserId = request.UserId,
                 Description = request.Description,
+                Privacy = request.Privacy,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -83,11 +86,12 @@ namespace ranking_website.Services.List
                     { "Id", new AttributeValue { S = list.Id } },
                     { "Name", new AttributeValue { S = list.Name } },
                     { "UserId", new AttributeValue { S = list.UserId } },
-                    { "Description", new AttributeValue { S = list.Description }  },
+                    { "Privacy", new AttributeValue { S = list.Privacy } },
                     { "CreatedAt", new AttributeValue { S = list.CreatedAt.ToString("o") } }
                 }
             };
 
+            // Only add description if it is not null or empty
             if (!string.IsNullOrEmpty(list.Description))
             {
                 dynamoRequest.Item.Add("Description", new AttributeValue { S = list.Description });
@@ -150,6 +154,7 @@ namespace ranking_website.Services.List
                 Name = response.Attributes["Name"].S,
                 UserId = response.Attributes["UserId"].S,
                 Description = response.Attributes.TryGetValue("Description", out AttributeValue? value) ? value.S : null,
+                Privacy = response.Attributes["Privacy"].S,
                 CreatedAt = DateTime.Parse(response.Attributes["CreatedAt"].S)
             };
         }
@@ -196,8 +201,8 @@ namespace ranking_website.Services.List
             return [.. response.Items.Select(item => new ListItem
             {
                 ListId = item["ListId"].S,
-                Id = item["ItemId"].S,
-                Name = item["ItemName"].S,
+                Id = item["Id"].S,
+                Name = item["Name"].S,
                 Rank = int.Parse(item["Rank"].N),
                 CreatedAt = DateTime.Parse(item["CreatedAt"].S)
             })];
@@ -224,8 +229,8 @@ namespace ranking_website.Services.List
                 Item = new Dictionary<string, AttributeValue>
                 {
                     { "ListId", new AttributeValue { S = item.ListId } },
-                    { "ItemId", new AttributeValue { S = item.Id } },
-                    { "ItemName", new AttributeValue { S = item.Name } },
+                    { "Id", new AttributeValue { S = item.Id } },
+                    { "Name", new AttributeValue { S = item.Name } },
                     { "Rank", new AttributeValue { N = item.Rank.ToString() } },
                     { "CreatedAt", new AttributeValue { S = item.CreatedAt.ToString("o") } }
                 }
@@ -241,11 +246,11 @@ namespace ranking_website.Services.List
             var expressionAttributeValues = new Dictionary<string, AttributeValue>();
             var expressionAttributeNames = new Dictionary<string, string>();
 
-            if (request.ItemName != null)
+            if (request.Name != null)
             {
-                updateExpression.Add("#itemName = :itemName");
-                expressionAttributeNames["#itemName"] = "ItemName";
-                expressionAttributeValues[":itemName"] = new AttributeValue { S = request.ItemName };
+                updateExpression.Add("#name = :name");
+                expressionAttributeNames["#name"] = "Name";
+                expressionAttributeValues[":name"] = new AttributeValue { S = request.Name };
             }
 
             if (request.Rank.HasValue)
@@ -266,7 +271,7 @@ namespace ranking_website.Services.List
                 Key = new Dictionary<string, AttributeValue>
             {
                 { "ListId", new AttributeValue { S = listId } },
-                { "ItemId", new AttributeValue { S = itemId } }
+                { "Id", new AttributeValue { S = itemId } }
             },
                 UpdateExpression = "SET " + string.Join(", ", updateExpression),
                 ExpressionAttributeNames = expressionAttributeNames,
@@ -297,7 +302,7 @@ namespace ranking_website.Services.List
                 Key = new Dictionary<string, AttributeValue>
                 {
                     { "ListId", new AttributeValue { S = listId } },
-                    { "ItemId", new AttributeValue { S = itemId } }
+                    { "Id", new AttributeValue { S = itemId } }
                 }
             };
 
@@ -319,7 +324,7 @@ namespace ranking_website.Services.List
                     Key = new Dictionary<string, AttributeValue>
                     {
                         { "ListId", new AttributeValue { S = listId } },
-                        { "ItemId", new AttributeValue { S = item.Id } }
+                        { "Id", new AttributeValue { S = item.Id } }
                     },
                     UpdateExpression = "SET #rank = :rank",
                     ExpressionAttributeNames = new Dictionary<string, string>

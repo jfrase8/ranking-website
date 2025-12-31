@@ -10,21 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as RankingNumberedListRouteImport } from './routes/ranking/numbered-list'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
 import { Route as RankingTierListIndexRouteImport } from './routes/ranking/tier-list/index'
+import { Route as RankingNumberedListIndexRouteImport } from './routes/ranking/numbered-list/index'
 import { Route as RankingTierListIdRouteImport } from './routes/ranking/tier-list/$id'
+import { Route as RankingNumberedListListIdRouteImport } from './routes/ranking/numbered-list/$listId'
 import { Route as DemoFormSimpleRouteImport } from './routes/demo/form.simple'
 import { Route as DemoFormAddressRouteImport } from './routes/demo/form.address'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RankingNumberedListRoute = RankingNumberedListRouteImport.update({
-  id: '/ranking/numbered-list',
-  path: '/ranking/numbered-list',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
@@ -37,11 +33,23 @@ const RankingTierListIndexRoute = RankingTierListIndexRouteImport.update({
   path: '/ranking/tier-list/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RankingNumberedListIndexRoute =
+  RankingNumberedListIndexRouteImport.update({
+    id: '/ranking/numbered-list/',
+    path: '/ranking/numbered-list/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const RankingTierListIdRoute = RankingTierListIdRouteImport.update({
   id: '/ranking/tier-list/$id',
   path: '/ranking/tier-list/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RankingNumberedListListIdRoute =
+  RankingNumberedListListIdRouteImport.update({
+    id: '/ranking/numbered-list/$listId',
+    path: '/ranking/numbered-list/$listId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const DemoFormSimpleRoute = DemoFormSimpleRouteImport.update({
   id: '/demo/form/simple',
   path: '/demo/form/simple',
@@ -56,29 +64,32 @@ const DemoFormAddressRoute = DemoFormAddressRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
-  '/ranking/numbered-list': typeof RankingNumberedListRoute
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
+  '/ranking/numbered-list/$listId': typeof RankingNumberedListListIdRoute
   '/ranking/tier-list/$id': typeof RankingTierListIdRoute
+  '/ranking/numbered-list': typeof RankingNumberedListIndexRoute
   '/ranking/tier-list': typeof RankingTierListIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
-  '/ranking/numbered-list': typeof RankingNumberedListRoute
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
+  '/ranking/numbered-list/$listId': typeof RankingNumberedListListIdRoute
   '/ranking/tier-list/$id': typeof RankingTierListIdRoute
+  '/ranking/numbered-list': typeof RankingNumberedListIndexRoute
   '/ranking/tier-list': typeof RankingTierListIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
-  '/ranking/numbered-list': typeof RankingNumberedListRoute
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
+  '/ranking/numbered-list/$listId': typeof RankingNumberedListListIdRoute
   '/ranking/tier-list/$id': typeof RankingTierListIdRoute
+  '/ranking/numbered-list/': typeof RankingNumberedListIndexRoute
   '/ranking/tier-list/': typeof RankingTierListIndexRoute
 }
 export interface FileRouteTypes {
@@ -86,38 +97,42 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/demo/tanstack-query'
-    | '/ranking/numbered-list'
     | '/demo/form/address'
     | '/demo/form/simple'
+    | '/ranking/numbered-list/$listId'
     | '/ranking/tier-list/$id'
+    | '/ranking/numbered-list'
     | '/ranking/tier-list'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/demo/tanstack-query'
-    | '/ranking/numbered-list'
     | '/demo/form/address'
     | '/demo/form/simple'
+    | '/ranking/numbered-list/$listId'
     | '/ranking/tier-list/$id'
+    | '/ranking/numbered-list'
     | '/ranking/tier-list'
   id:
     | '__root__'
     | '/'
     | '/demo/tanstack-query'
-    | '/ranking/numbered-list'
     | '/demo/form/address'
     | '/demo/form/simple'
+    | '/ranking/numbered-list/$listId'
     | '/ranking/tier-list/$id'
+    | '/ranking/numbered-list/'
     | '/ranking/tier-list/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
-  RankingNumberedListRoute: typeof RankingNumberedListRoute
   DemoFormAddressRoute: typeof DemoFormAddressRoute
   DemoFormSimpleRoute: typeof DemoFormSimpleRoute
+  RankingNumberedListListIdRoute: typeof RankingNumberedListListIdRoute
   RankingTierListIdRoute: typeof RankingTierListIdRoute
+  RankingNumberedListIndexRoute: typeof RankingNumberedListIndexRoute
   RankingTierListIndexRoute: typeof RankingTierListIndexRoute
 }
 
@@ -128,13 +143,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/ranking/numbered-list': {
-      id: '/ranking/numbered-list'
-      path: '/ranking/numbered-list'
-      fullPath: '/ranking/numbered-list'
-      preLoaderRoute: typeof RankingNumberedListRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo/tanstack-query': {
@@ -151,11 +159,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RankingTierListIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ranking/numbered-list/': {
+      id: '/ranking/numbered-list/'
+      path: '/ranking/numbered-list'
+      fullPath: '/ranking/numbered-list'
+      preLoaderRoute: typeof RankingNumberedListIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ranking/tier-list/$id': {
       id: '/ranking/tier-list/$id'
       path: '/ranking/tier-list/$id'
       fullPath: '/ranking/tier-list/$id'
       preLoaderRoute: typeof RankingTierListIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ranking/numbered-list/$listId': {
+      id: '/ranking/numbered-list/$listId'
+      path: '/ranking/numbered-list/$listId'
+      fullPath: '/ranking/numbered-list/$listId'
+      preLoaderRoute: typeof RankingNumberedListListIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo/form/simple': {
@@ -178,10 +200,11 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DemoTanstackQueryRoute: DemoTanstackQueryRoute,
-  RankingNumberedListRoute: RankingNumberedListRoute,
   DemoFormAddressRoute: DemoFormAddressRoute,
   DemoFormSimpleRoute: DemoFormSimpleRoute,
+  RankingNumberedListListIdRoute: RankingNumberedListListIdRoute,
   RankingTierListIdRoute: RankingTierListIdRoute,
+  RankingNumberedListIndexRoute: RankingNumberedListIndexRoute,
   RankingTierListIndexRoute: RankingTierListIndexRoute,
 }
 export const routeTree = rootRouteImport

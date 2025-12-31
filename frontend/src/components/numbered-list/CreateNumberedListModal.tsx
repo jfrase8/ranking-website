@@ -1,17 +1,25 @@
 import { Controller, useForm } from 'react-hook-form'
 import type { SubmitHandler } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogFooter, DialogHeader } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Text } from '@/components/ui/text'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { useCreateList } from '@/hooks/useList'
+import { PrivacyEnum } from '@/types/enums/PrivacyEnum'
 
 type Inputs = {
   listName: string
   description: string
-  privacy: string
+  privacy: PrivacyEnum
 }
 
 interface CreateNumberedListModalProps {
@@ -24,21 +32,34 @@ export default function CreateNumberedListModal({
 }: CreateNumberedListModalProps) {
   const { handleSubmit, register, control } = useForm<Inputs>({
     defaultValues: {
-      privacy: 'public',
+      privacy: PrivacyEnum.PRIVATE,
     },
   })
 
-  const onSubmit: SubmitHandler<Inputs> = (data: Inputs) => {
-    console.log(data)
+  const { mutateAsync } = useCreateList()
+
+  const onSubmit: SubmitHandler<Inputs> = async (data: Inputs) => {
+    try {
+      await mutateAsync({
+        name: data.listName,
+        description: data.description,
+        privacy: data.privacy,
+        userId: '123',
+      })
+    } catch (err) {
+      console.error('Failed to create list:', err)
+    }
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent showCloseButton={false}>
+      <DialogContent showCloseButton={false} aria-describedby={undefined}>
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
             <div className="flex justify-center">
-              <Text variant="header">Create a Numbered List</Text>
+              <DialogTitle>
+                <Text variant="header">Create a Numbered List</Text>
+              </DialogTitle>
             </div>
           </DialogHeader>
           <div className="flex flex-col gap-8">
@@ -61,8 +82,8 @@ export default function CreateNumberedListModal({
               <Textarea
                 id="description"
                 placeholder="Enter description..."
-                className="w-[75%]"
                 {...register('description')}
+                className="w-[75%]"
               />
             </div>
             <div className="flex gap-1">
