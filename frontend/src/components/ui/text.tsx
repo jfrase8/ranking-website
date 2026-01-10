@@ -5,12 +5,12 @@ import { cn } from '@/lib/utils'
 const textVariants = cva('leading-none', {
   variants: {
     variant: {
-      default:
-        'text-base font-medium text-primary dark:text-primary-foreground',
-      header:
+      default: 'text-base font-medium text-primary dark:text-primary-foreground',
+      headerPrimary:
         'text-2xl font-semibold text-primary dark:text-primary-foreground font-goldman',
-      subText:
-        'text-sm font-medium text-muted-foreground dark:text-muted-foreground',
+      headerSecondary:
+        'text-2xl font-semibold text-secondary dark:text-secondary-foreground font-goldman',
+      subText: 'text-sm font-medium text-muted-foreground dark:text-muted-foreground',
     },
   },
   defaultVariants: {
@@ -24,11 +24,7 @@ type TextProps = {
 } & VariantProps<typeof textVariants>
 function Text({ className, children, variant, ...props }: TextProps) {
   return (
-    <span
-      data-slot="text"
-      className={cn(textVariants({ variant, className }))}
-      {...props}
-    >
+    <span data-slot="text" className={cn(textVariants({ variant, className }))} {...props}>
       {children}
     </span>
   )
