@@ -1,72 +1,24 @@
-import clsx from 'clsx'
-import { Button } from './ui/button'
+import { CreateListModals } from '@/constants/navbar/CreateListModals'
+import { NavItems } from '@/constants/navbar/navItems'
+import type { ListTypeEnum } from '@/types/enums/ListTypeEnum'
 import { useNavigate } from '@tanstack/react-router'
+import clsx from 'clsx'
+import { useState } from 'react'
+import { Button } from './ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
-import { ListTypeEnum } from '@/types/enums/ListTypeEnum'
-import React, { useState } from 'react'
-import CreateNumberedListModal from './numbered-list/CreateNumberedListModal'
-
-type PopoverItem = {
-  label: string
-  Modal: React.ComponentType<{ isOpen: boolean; setIsOpen: (open: boolean) => void }>
-}
-type NavItem = {
-  label: string
-  popover?: Record<ListTypeEnum, PopoverItem>
-  onClick?: () => void
-}
 
 export default function Navbar() {
-  const [isOpen, setIsOpen] = useState<boolean>(false)
+  // const [isOpen, setIsOpen] = useState<boolean>(false)
 
-  const [ActiveModal, setActiveModal] = useState<React.ComponentType<{
-    isOpen: boolean
-    setIsOpen: (open: boolean) => void
-  }> | null>(null)
+  const [activeModal, setActiveModal] = useState<ListTypeEnum | null>(null)
 
-  const navItems = {
-    left: {
-      create: {
-        label: 'Create List',
-        popover: {
-          [ListTypeEnum.NUMBERED]: {
-            label: 'Numbered List',
-            Modal: CreateNumberedListModal,
-          },
-          [ListTypeEnum.TIERED]: {
-            label: 'Tier List',
-            Modal: CreateNumberedListModal,
-          },
-        },
-      },
-      view: {
-        label: 'View Lists',
-      },
-      global: {
-        label: 'Global Rankings',
-      },
-    } as Record<string, NavItem>,
-    right: {
-      login: {
-        label: 'Create Account/Login',
-      },
-      profile: {
-        label: 'Profile',
-      },
-      settings: {
-        label: 'Settings',
-      },
-      logout: {
-        label: 'Logout',
-      },
-    } as Record<string, NavItem>,
-  }
+  const Modal = activeModal && CreateListModals[activeModal]
 
   const navigate = useNavigate()
 
   return (
     <nav className="flex h-16 items-center justify-between bg-linear-to-r from-indigo-950 to-indigo-800 shadow-lg">
-      {Object.entries(navItems).map(([position, tabs], i) => (
+      {Object.entries(NavItems).map(([position, tabs], i) => (
         <div
           className={clsx('flex items-center size-full', position === 'right' && 'justify-end')}
           key={position}
@@ -106,7 +58,7 @@ export default function Navbar() {
                 <Popover key={label}>
                   <PopoverTrigger asChild>{button}</PopoverTrigger>
                   <PopoverContent className="size-fit flex flex-col p-0">
-                    {Object.values(popover).map(({ label, Modal }, i) => (
+                    {Object.entries(popover).map(([type, { label }], i) => (
                       <Button
                         key={label}
                         size="sm"
@@ -118,8 +70,7 @@ export default function Navbar() {
                               : undefined
                         }
                         onClick={() => {
-                          setActiveModal(() => Modal)
-                          setIsOpen(true)
+                          setActiveModal(type as ListTypeEnum)
                         }}
                       >
                         {label}
@@ -133,9 +84,7 @@ export default function Navbar() {
           })}
         </div>
       ))}
-      {ActiveModal && (
-        <ActiveModal isOpen={true} setIsOpen={(open) => !open && setActiveModal(null)} />
-      )}
+      {Modal && <Modal isOpen={true} setIsOpen={(open) => !open && setActiveModal(null)} />}
     </nav>
   )
 }
