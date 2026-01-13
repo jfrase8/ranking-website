@@ -24,7 +24,7 @@ type Inputs = {
 
 interface CreateNumberedListModalProps {
   isOpen: boolean
-  setIsOpen: (open: boolean) => void
+  setIsOpen: (oepn: boolean) => void
 }
 export default function CreateNumberedListModal({
   isOpen,
