@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Text } from '@/components/ui/text'
 import { useLists } from '@/hooks/useList'
-import CreateNumberedListModal from '@/components/numbered-list/CreateNumberedListModal'
+import CreateNumberedListModal from '@/components/modals/create-list-modals/CreateNumberedListModal'
 import { useNavigate } from '@tanstack/react-router'
 import {
   Card,

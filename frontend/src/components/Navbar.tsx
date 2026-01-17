@@ -8,9 +8,8 @@ import { Button } from './ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
 
 export default function Navbar() {
-  // const [isOpen, setIsOpen] = useState<boolean>(false)
-
   const [activeModal, setActiveModal] = useState<ListTypeEnum | null>(null)
+  const [isOpen, setIsOpen] = useState<boolean>(false)
 
   const Modal = activeModal && CreateListModals[activeModal]
 
@@ -71,6 +70,7 @@ export default function Navbar() {
                         }
                         onClick={() => {
                           setActiveModal(type as ListTypeEnum)
+                          setIsOpen(true)
                         }}
                       >
                         {label}
@@ -84,7 +84,7 @@ export default function Navbar() {
           })}
         </div>
       ))}
-      {Modal && <Modal isOpen={true} setIsOpen={(open) => !open && setActiveModal(null)} />}
+      {Modal && <Modal isOpen={isOpen} setIsOpen={setIsOpen} />}
     </nav>
   )
 }

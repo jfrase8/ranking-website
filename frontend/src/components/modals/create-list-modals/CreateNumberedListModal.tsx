@@ -58,7 +58,7 @@ export default function CreateNumberedListModal({
           <DialogHeader>
             <div className="flex justify-center">
               <DialogTitle>
-                <Text variant="header">Create a Numbered List</Text>
+                <Text variant="headerPrimary">Create a Numbered List</Text>
               </DialogTitle>
             </div>
           </DialogHeader>
