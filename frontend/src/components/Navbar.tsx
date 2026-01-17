@@ -48,7 +48,13 @@ export default function Navbar() {
           )}
           {Object.values(tabs).map(({ label, popover, onClick }) => {
             const button = (
-              <Button fitParent variant="ghost" className="w-fit px-4" onClick={onClick}>
+              <Button
+                key={label}
+                fitParent
+                variant="ghost"
+                className="w-fit px-4"
+                onClick={onClick}
+              >
                 {label}
               </Button>
             )

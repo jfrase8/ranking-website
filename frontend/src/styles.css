@@ -40,9 +40,10 @@ code {
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.141 0.005 285.823);
   --primary: oklch(58.5% 0.233 277.117);
+  --primary-dark: oklch(39.8% 0.195 277.366);
   --primary-foreground: oklch(1 0 0);
   --secondary: oklch(93% 0.034 272.788);
-  --secondary-foreground: oklch(39.8% 0.195 277.366);
+  --secondary-foreground: oklch(58.5% 0.233 277.117);
   --muted: oklch(1 0 0);
   --muted-foreground: oklch(0.552 0.016 285.938);
   --accent: oklch(58.5% 0.233 277.117);
@@ -111,6 +112,7 @@ code {
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
+  --color-primary-dark: var(--primary-dark);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);

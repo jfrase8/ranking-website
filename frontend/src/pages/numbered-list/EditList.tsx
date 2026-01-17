@@ -6,6 +6,7 @@ import { Text } from '@/components/ui/text'
 import { useAddItem, useListItems, useRemoveItem } from '@/hooks/useListItems'
 import { useLists } from '@/hooks/useList'
 import { useParams } from '@tanstack/react-router'
+import { Section } from '@/components/Section'
 
 export default function EditList() {
   const { listId } = useParams({ from: '/ranking/numbered-list/$listId' })
@@ -20,13 +21,13 @@ export default function EditList() {
     isLoading: isListItemsLoading,
   } = useListItems(listId)
 
-  if (listsError || listItemsError) return console.error(listsError || listItemsError)
-  if (!lists || lists.length === 0) return console.error('No lists found')
-
-  const listData = lists.find((list) => list.id === listId)
-
   const addItemMutation = useAddItem()
   const removeItemMutation = useRemoveItem()
+
+  if (listsError || listItemsError) return console.error(listsError || listItemsError)
+  if (!lists || lists.length === 0) return <div>Loading...</div>
+
+  const listData = lists.find((list) => list.id === listId)
 
   const addItem = async (itemName: string) => {
     if (!itemName.trim()) return
@@ -51,46 +52,52 @@ export default function EditList() {
 
   return (
     <div className="flex h-full">
-      <div className="flex flex-col border border-black w-1/4 p-4 gap-4">
-        <Text variant="header">Search for items to add to list</Text>
+      <Section
+        className="w-1/4"
+        header={<Text variant="headerSecondary">Search for items to add to list</Text>}
+      >
         <Input onChange={(e) => setSearch(e.target.value)} value={search} placeholder="Search..." />
         <SearchList
           search={search}
           list={['Cow', 'Mammoth', 'Centipede', 'Lobster', 'Horse', 'Otter']}
           onClick={(item) => addItem(item)}
+          buttonVariant="secondary"
         />
-      </div>
-      <div className="flex flex-col border border-black w-1/2 p-4">
+      </Section>
+      <Section
+        className="w-1/2"
+        header={<Text variant="headerSecondary">List Items</Text>}
+        variant="secondary"
+      >
         {isListItemsLoading ? (
           <div>Loading...</div>
         ) : (
           listItems &&
           listItems.map((item) => (
-            <Button key={item.id} onClick={() => removeItem(item.id)}>
+            <Button key={item.id} onClick={() => removeItem(item.id)} variant="secondary">
               {item.rank}. {item.name}
             </Button>
           ))
         )}
-      </div>
-      <div className="flex flex-col border border-black w-1/4 p-4">
+      </Section>
+      <Section className="w-1/4" header={<Text variant="headerSecondary">List Details</Text>}>
         {isListsLoading ? (
           <div>Loading...</div>
         ) : (
           <div className="flex flex-col gap-4">
-            <Text variant="header">Section 3 - List Details</Text>
             {listData ? (
               <div className="flex flex-col gap-2">
-                <Text>{listData.name}</Text>
-                <Text>{listData.description}</Text>
-                <Text>{listData.privacy}</Text>
-                <Text>{listData.createdAt}</Text>
+                <Text variant="secondary">{listData.name}</Text>
+                <Text variant="secondary">{listData.description}</Text>
+                <Text variant="secondary">{listData.privacy}</Text>
+                <Text variant="secondary">{listData.createdAt}</Text>
               </div>
             ) : (
               <Text>Error finding list data</Text>
             )}
           </div>
         )}
-      </div>
+      </Section>
     </div>
   )
 }
