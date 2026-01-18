@@ -6,6 +6,8 @@ import clsx from 'clsx'
 import { useState } from 'react'
 import { Button } from './ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
+import { Login } from './Login'
+import { useAuthStore } from '@/stores/useAuthStore'
 
 export default function Navbar() {
   const [activeModal, setActiveModal] = useState<ListTypeEnum | null>(null)
@@ -14,6 +16,10 @@ export default function Navbar() {
   const Modal = activeModal && CreateListModals[activeModal]
 
   const navigate = useNavigate()
+
+  const { user } = useAuthStore()
+
+  console.log('user:', user)
 
   return (
     <nav className="flex h-16 items-center justify-between bg-linear-to-r from-indigo-950 to-indigo-800 shadow-lg">
@@ -55,7 +61,7 @@ export default function Navbar() {
                 className="w-fit px-4"
                 onClick={onClick}
               >
-                {label}
+                {user && label === 'Profile' ? user.userName : label}
               </Button>
             )
             if (popover) {
@@ -86,6 +92,13 @@ export default function Navbar() {
                 </Popover>
               )
             }
+            if (!user && (label === 'Profile' || label === 'Logout')) return
+            if (label === 'Login')
+              return user ? null : (
+                <div className="ml-2">
+                  <Login />
+                </div>
+              )
             return button
           })}
         </div>

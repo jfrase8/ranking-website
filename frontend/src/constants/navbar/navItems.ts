@@ -1,3 +1,4 @@
+import { useAuthStore } from '@/stores/useAuthStore'
 import { ListTypeEnum } from '@/types/enums/ListTypeEnum'
 
 type PopoverItem = {
@@ -28,19 +29,20 @@ export const NavItems = {
     global: {
       label: 'Global Rankings',
     },
+    login: {
+      label: 'Login',
+    },
   } as Record<string, NavItem>,
   right: {
-    login: {
-      label: 'Create Account/Login',
-    },
     profile: {
       label: 'Profile',
     },
-    settings: {
-      label: 'Settings',
-    },
     logout: {
       label: 'Logout',
+      onClick: () => {
+        useAuthStore.getState().logout()
+        window.location.reload()
+      },
     },
   } as Record<string, NavItem>,
 }

@@ -52,10 +52,7 @@ export default function EditList() {
 
   return (
     <div className="flex h-full">
-      <Section
-        className="w-1/4"
-        header={<Text variant="headerSecondary">Search for items to add to list</Text>}
-      >
+      <Section className="w-1/4" header={<Text variant="headerSecondary">Add Items</Text>}>
         <Input onChange={(e) => setSearch(e.target.value)} value={search} placeholder="Search..." />
         <SearchList
           search={search}

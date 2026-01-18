@@ -1,10 +1,13 @@
 ﻿using Amazon.DynamoDBv2;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using ranking_website.Services.List;
+using ranking_website.Services.User;
+using ranking_website.Services.Auth;
 
 namespace ranking_website
 {
-    using Microsoft.AspNetCore.Authentication.Negotiate;
-    using ranking_website.Services.List;
-
     public class Startup(IConfiguration configuration)
     {
         public IConfiguration Configuration { get; } = configuration;
@@ -16,11 +19,30 @@ namespace ranking_website
             {
                 options.AddDefaultPolicy(builder =>
                 {
-                    builder.AllowAnyOrigin()
-                           .AllowAnyMethod()
-                           .AllowAnyHeader();
+                    builder.WithOrigins(
+                            "http://localhost:3000"
+                        )
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials();  // Important for OAuth
                 });
             });
+
+            // Add JWT Authentication
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(
+                            Encoding.ASCII.GetBytes(Configuration["Jwt:Secret"] ?? throw new InvalidOperationException("Jwt:Secret not configured"))),
+                        ValidateIssuer = true,
+                        ValidIssuer = Configuration["Jwt:Issuer"] ?? "ranking-website",
+                        ValidateAudience = false,
+                        ValidateLifetime = true
+                    };
+                });
 
             services.AddControllers();
             services.AddEndpointsApiExplorer();
@@ -29,8 +51,10 @@ namespace ranking_website
             // Add AWS DynamoDB as Singleton (better for Lambda)
             services.AddAWSService<IAmazonDynamoDB>();
 
-            // Register your service as Singleton (better for Lambda)
+            // Register services as Singleton (better for Lambda)
             services.AddSingleton<IListService, DynamoDbListService>();
+            services.AddSingleton<IUserService, DynamoDbUserService>();
+            services.AddSingleton<IAuthService, AuthService>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -56,8 +80,12 @@ namespace ranking_website
             app.UseCors();
 
             app.UseHttpsRedirection();
-            app.UseAuthentication();
+
             app.UseRouting();
+
+            // Authentication must come AFTER UseRouting but BEFORE UseAuthorization
+            app.UseAuthentication();
+            app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
