@@ -52,7 +52,6 @@ export default function CreateNumberedListModal({
         name: data.listName,
         description: data.description,
         privacy: data.privacy,
-        userId: '123',
       })
       setIsOpen(false)
       navigate({ to: `/ranking/numbered-list/${id}` })

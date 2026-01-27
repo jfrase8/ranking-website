@@ -11,8 +11,8 @@ namespace ranking_website.Services.Auth
     public class AuthService(IUserService userService, IConfiguration configuration) : IAuthService
     {
         private readonly IUserService _userService = userService;
-        private readonly string _googleClientId = configuration["Google:ClientId"] ?? throw new ArgumentNullException("Google:ClientId");
-        private readonly string _jwtSecret = configuration["Jwt:Secret"] ?? throw new ArgumentNullException("Jwt:Secret");
+        private readonly string _jwtSecret = configuration["Jwt:Secret"] ?? throw new InvalidOperationException("Jwt:Secret configuration is missing");
+        private readonly string _googleClientId = configuration["Google:ClientId"] ?? throw new InvalidOperationException("Google:ClientId configuration is missing");
         private readonly string _jwtIssuer = configuration["Jwt:Issuer"] ?? "ranking-website";
 
         public async Task<AuthResponse> VerifyGoogleTokenAsync(string idToken)
@@ -29,27 +29,14 @@ namespace ranking_website.Services.Auth
                 var user = await _userService.GetUserByIdAsync(payload.Subject);
 
                 // Create user if doesn't exist
-                if (user == null)
+                user ??= await _userService.CreateUserAsync(new CreateUserRequest
                 {
-                    user = await _userService.CreateUserAsync(new CreateUserRequest
-                    {
-                        Id = payload.Subject, // Google's unique ID becomes our user ID
-                        UserName = payload.Name ?? payload.Email.Split('@')[0],
-                        Email = payload.Email
-                    });
+                    Id = payload.Subject, // Google's unique ID becomes our user ID
+                    UserName = payload.Name ?? payload.Email.Split('@')[0],
+                    Email = payload.Email
+                });
 
-                    // Update avatar if provided by Google
-                    if (!string.IsNullOrEmpty(payload.Picture))
-                    {
-                        await _userService.UpdateUserAsync(user.Id, new UpdateUserRequest
-                        {
-                            AvatarUrl = payload.Picture
-                        });
-                        user.AvatarUrl = payload.Picture;
-                    }
-                }
-
-                // Always update avatar on login (in case they changed it)
+                // Update avatar if provided and different (works for both new and existing users)
                 if (!string.IsNullOrEmpty(payload.Picture) && user.AvatarUrl != payload.Picture)
                 {
                     user = await _userService.UpdateUserAsync(user.Id, new UpdateUserRequest
@@ -57,6 +44,9 @@ namespace ranking_website.Services.Auth
                         AvatarUrl = payload.Picture
                     });
                 }
+
+                // Return error if user is still null
+                if (user == null) throw new Exception("User creation was unsuccessful");
 
                 // Generate JWT token
                 var token = GenerateJwtToken(user.Id);
@@ -76,16 +66,17 @@ namespace ranking_website.Services.Auth
         private string GenerateJwtToken(string userId)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_jwtSecret);
+            var key = Encoding.UTF8.GetBytes(_jwtSecret);
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new[]
-                {
+                Subject = new ClaimsIdentity(
+                [
                     new Claim(ClaimTypes.NameIdentifier, userId)
-                }),
+                ]),
                 Expires = DateTime.UtcNow.AddDays(7),
                 Issuer = _jwtIssuer,
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                NotBefore = DateTime.UtcNow,
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);

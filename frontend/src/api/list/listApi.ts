@@ -3,8 +3,8 @@ import { apiClient } from '../base'
 import type { CreateListBody } from './types/body'
 
 export const listApi = {
-  getUserLists: async (userId: string): Promise<List[]> => {
-    const { data } = await apiClient.get<List[]>(`/api/lists?userId=${userId}`)
+  getUserLists: async (): Promise<List[]> => {
+    const { data } = await apiClient.get<List[]>(`/api/lists`)
     return data
   },
   getListData: async (listId: string): Promise<List> => {

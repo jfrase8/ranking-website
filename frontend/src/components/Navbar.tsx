@@ -8,18 +8,30 @@ import { Button } from './ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
 import { Login } from './Login'
 import { useAuthStore } from '@/stores/useAuthStore'
+import LoginModal from './modals/LoginModal'
 
 export default function Navbar() {
-  const [activeModal, setActiveModal] = useState<ListTypeEnum | null>(null)
+  const [activeModal, setActiveModal] = useState<ListTypeEnum | 'login' | null>(null)
+  const [loginModalText, setLoginModalText] = useState<string>('')
+  const [modalToOpen, setModalToOpen] = useState<ListTypeEnum | null>(null)
   const [isOpen, setIsOpen] = useState<boolean>(false)
 
-  const Modal = activeModal && CreateListModals[activeModal]
+  const Modal =
+    activeModal && (activeModal === 'login' ? LoginModal : CreateListModals[activeModal])
 
   const navigate = useNavigate()
 
   const { user } = useAuthStore()
 
-  console.log('user:', user)
+  // This function will be called when the user finishes signing in from the login modal
+  const handleRedirection = () => {
+    if (modalToOpen) {
+      setActiveModal(modalToOpen)
+      setIsOpen(true)
+    } else {
+      // Redirect to page
+    }
+  }
 
   return (
     <nav className="flex h-16 items-center justify-between bg-linear-to-r from-indigo-950 to-indigo-800 shadow-lg">
@@ -81,6 +93,15 @@ export default function Navbar() {
                               : undefined
                         }
                         onClick={() => {
+                          // Check if user is logged in
+                          if (!user) {
+                            // Open modal telling user to log in
+                            setActiveModal('login')
+                            setModalToOpen(type as ListTypeEnum) // This state is set so the right modal will open after logging in
+                            setLoginModalText('You must sign in to create a list.')
+                            setIsOpen(true)
+                            return
+                          }
                           setActiveModal(type as ListTypeEnum)
                           setIsOpen(true)
                         }}
@@ -103,7 +124,14 @@ export default function Navbar() {
           })}
         </div>
       ))}
-      {Modal && <Modal isOpen={isOpen} setIsOpen={setIsOpen} />}
+      {Modal && (
+        <Modal
+          isOpen={isOpen}
+          setIsOpen={setIsOpen}
+          text={loginModalText}
+          onLogin={handleRedirection}
+        />
+      )}
     </nav>
   )
 }

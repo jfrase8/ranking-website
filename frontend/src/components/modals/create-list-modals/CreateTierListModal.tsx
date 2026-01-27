@@ -41,7 +41,6 @@ export default function CreateTierListModal({ isOpen, setIsOpen }: CreateTierLis
         name: data.listName,
         description: data.description,
         privacy: data.privacy,
-        userId: '123',
       })
     } catch (err) {
       console.error('Failed to create list:', err)

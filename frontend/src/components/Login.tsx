@@ -1,46 +1,28 @@
+import { apiClient } from '@/api/base'
 import { useAuthStore } from '@/stores/useAuthStore'
+import type { AuthResponse } from '@/types/AuthResponse'
 import { type CredentialResponse, GoogleLogin } from '@react-oauth/google'
 import { useMutation } from '@tanstack/react-query'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL as string
-
-interface AuthResponse {
-  token: string
-  user: {
-    id: string
-    userName: string
-    email: string | null
-    avatarUrl: string | null
-    createdAt: string
-  }
-}
-
-interface LoginRequest {
-  idToken: string
-}
-
-export function Login() {
+export function Login({ onSuccess }: { onSuccess?: () => void }) {
   const { login } = useAuthStore()
 
   const loginMutation = useMutation<AuthResponse, Error, string>({
     mutationFn: async (googleToken: string) => {
-      const response = await fetch(`${API_BASE_URL}/api/auth/google`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken: googleToken } as LoginRequest),
+      // Since /sigma is in your .env, we just need the remaining path
+      const { data } = await apiClient.post<AuthResponse>('/api/auth/google', {
+        idToken: googleToken,
       })
-
-      if (!response.ok) {
-        throw new Error('Login failed')
-      }
-
-      return response.json() as Promise<AuthResponse>
+      return data
     },
-    onSuccess: (data: AuthResponse) => {
+    onSuccess: (data) => {
+      // Make sure your store and localStorage keys ('authToken') match
       login(data.token, data.user)
+      onSuccess?.()
     },
-    onError: (error: Error) => {
-      console.error('Login error:', error)
+    onError: (error: any) => {
+      const errorMsg = error.response?.data?.errors?.['$']?.[0] || error.message
+      console.error('Authentication failed:', errorMsg)
     },
   })
 

@@ -39,40 +39,43 @@ namespace ranking_website.Services.List
         }
         public async Task<Models.List.List?> GetListAsync(string listId)
         {
-            var request = new GetItemRequest
+            var request = new QueryRequest
             {
                 TableName = ListsTableName,
-                Key = new Dictionary<string, AttributeValue>
+                IndexName = "Id-index",  // Use the GSI
+                KeyConditionExpression = "Id = :id",
+                ExpressionAttributeValues = new Dictionary<string, AttributeValue>
                 {
-                    { "Id", new AttributeValue { S = listId } }
+                    { ":id", new AttributeValue { S = listId } }
                 }
             };
 
-            var response = await _dynamoDb.GetItemAsync(request);
+            var response = await _dynamoDb.QueryAsync(request);
 
-            if (!response.IsItemSet)
+            if (response.Items.Count == 0)
             {
                 return null;
             }
 
+            var item = response.Items[0];
             return new Models.List.List
             {
-                Id = response.Item["Id"].S,
-                Name = response.Item["Name"].S,
-                UserId = response.Item["UserId"].S,
-                Description = response.Item.TryGetValue("Description", out AttributeValue? value) ? value.S : null,
-                Privacy = response.Item["Privacy"].S,
-                CreatedAt = DateTime.Parse(response.Item["CreatedAt"].S)
+                Id = item["Id"].S,
+                Name = item["Name"].S,
+                UserId = item["UserId"].S,
+                Description = item.TryGetValue("Description", out AttributeValue? value) ? value.S : null,
+                Privacy = item["Privacy"].S,
+                CreatedAt = DateTime.Parse(item["CreatedAt"].S)
             };
         }
 
-        public async Task<Models.List.List> CreateListAsync(CreateListRequest request)
+        public async Task<Models.List.List> CreateListAsync(CreateListRequest request, string userId)
         {
             var list = new Models.List.List
             {
                 Id = Guid.NewGuid().ToString(),
                 Name = request.Name,
-                UserId = request.UserId,
+                UserId = userId,
                 Description = request.Description,
                 Privacy = request.Privacy,
                 CreatedAt = DateTime.UtcNow

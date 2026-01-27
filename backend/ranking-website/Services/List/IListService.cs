@@ -8,7 +8,7 @@ namespace ranking_website.Services.List
         Task<List<Models.List.List?>> GetUserListsAsync(string userId);
         Task<Models.List.List?> GetListAsync(string listId);
         Task<List<ListItem>> GetListItemsAsync(string listId);
-        Task<Models.List.List> CreateListAsync(CreateListRequest request);
+        Task<Models.List.List> CreateListAsync(CreateListRequest request, string userId);
         Task<Models.List.List?> UpdateListAsync(string listID, UpdateListRequest request);
         Task<bool> DeleteListAsync(string listID);
         Task<ListItem> AddItemAsync( string listId, string itemName);

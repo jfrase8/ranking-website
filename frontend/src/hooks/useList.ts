@@ -2,11 +2,10 @@ import { listApi } from '@/api/list/listApi'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 // Hook to fetch all of a user's lists
-export const useLists = (userId: string) => {
+export const useLists = () => {
   return useQuery({
-    queryKey: ['lists', userId],
-    queryFn: () => listApi.getUserLists(userId),
-    enabled: !!userId, // Only run if userId exists
+    queryKey: ['lists'],
+    queryFn: () => listApi.getUserLists(),
     refetchOnWindowFocus: false,
   })
 }
@@ -26,9 +25,9 @@ export const useCreateList = () => {
 
   return useMutation({
     mutationFn: listApi.createList,
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       // Invalidate and refetch
-      queryClient.invalidateQueries({ queryKey: ['lists', variables.userId] })
+      queryClient.invalidateQueries({ queryKey: ['lists'] })
     },
   })
 }

@@ -36,11 +36,39 @@ namespace ranking_website
                     {
                         ValidateIssuerSigningKey = true,
                         IssuerSigningKey = new SymmetricSecurityKey(
-                            Encoding.ASCII.GetBytes(Configuration["Jwt:Secret"] ?? throw new InvalidOperationException("Jwt:Secret not configured"))),
+                            Encoding.UTF8.GetBytes(Configuration["Jwt:Secret"] ?? throw new InvalidOperationException("Jwt:Secret is missing"))),
                         ValidateIssuer = true,
                         ValidIssuer = Configuration["Jwt:Issuer"] ?? "ranking-website",
+                        
                         ValidateAudience = false,
-                        ValidateLifetime = true
+                        ValidateLifetime = true,
+                    };
+
+                    // Add this to customize 401 responses
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnAuthenticationFailed = context =>
+                        {
+                            Console.WriteLine("JWT AUTH FAILED:");
+                            Console.WriteLine(context.Exception.GetType().Name);
+                            Console.WriteLine(context.Exception.Message);
+                            return Task.CompletedTask;
+                        },
+                        OnChallenge = context =>
+                        {
+                            // Skip the default logic
+                            context.HandleResponse();
+
+                            context.Response.StatusCode = 401;
+                            context.Response.ContentType = "application/json";
+
+                            var result = System.Text.Json.JsonSerializer.Serialize(new
+                            {
+                                message = "Authentication required. Please provide a valid token."
+                            });
+
+                            return context.Response.WriteAsync(result);
+                        },
                     };
                 });
 
@@ -59,14 +87,17 @@ namespace ranking_website
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            // Add this at the very beginning
+            // Startup.cs - Inside the Configure method
             app.Use(async (context, next) =>
             {
+                var auth = context.Request.Headers.Authorization.ToString();
+                Console.WriteLine($"RAW AUTH HEADER: '{auth}'");
                 Console.WriteLine($"=== Incoming Request ===");
                 Console.WriteLine($"Path: {context.Request.Path}");
                 Console.WriteLine($"Method: {context.Request.Method}");
-                Console.WriteLine($"QueryString: {context.Request.QueryString}");
+
                 await next();
+
                 Console.WriteLine($"Response Status: {context.Response.StatusCode}");
             });
 

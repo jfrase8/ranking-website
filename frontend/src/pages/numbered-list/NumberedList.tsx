@@ -15,8 +15,7 @@ import {
 import { formatTimestamp } from '@/utils/timestamp'
 
 export default function NumberedList() {
-  const userId = '123'
-  const { data: listData, error: listDataError, isLoading: isListDataLoading } = useLists(userId)
+  const { data: listData, error: listDataError, isLoading: isListDataLoading } = useLists()
   const navigate = useNavigate()
   const [isOpen, setIsOpen] = useState(false)
 

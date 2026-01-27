@@ -13,7 +13,7 @@ export default function EditList() {
 
   const [search, setSearch] = useState('')
 
-  const { data: lists, error: listsError, isLoading: isListsLoading } = useLists('123')
+  const { data: lists, error: listsError, isLoading: isListsLoading } = useLists()
 
   const {
     data: listItems,
