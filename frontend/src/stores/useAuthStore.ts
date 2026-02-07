@@ -4,16 +4,16 @@ import { persist } from 'zustand/middleware'
 interface User {
   id: string
   userName: string
-  email: string | null
-  avatarUrl: string | null
+  email: string | undefined
+  avatarUrl: string | undefined
   createdAt: string
 }
 
 interface AuthStore {
-  user: User | null
-  accessToken: string | null
-  refreshToken: string | null
-  expiresAt: string | null
+  user: User | undefined
+  accessToken: string | undefined
+  refreshToken: string | undefined
+  expiresAt: string | undefined
   isAuthenticated: boolean
 
   login: (accessToken: string, refreshToken: string, expiresAt: string, user: User) => void
@@ -25,10 +25,10 @@ interface AuthStore {
 export const useAuthStore = create<AuthStore>()(
   persist(
     (set, get) => ({
-      user: null,
-      accessToken: null,
-      refreshToken: null,
-      expiresAt: null,
+      user: undefined,
+      accessToken: undefined,
+      refreshToken: undefined,
+      expiresAt: undefined,
       isAuthenticated: false,
 
       login: (accessToken: string, refreshToken: string, expiresAt: string, user: User) => {
@@ -43,10 +43,10 @@ export const useAuthStore = create<AuthStore>()(
 
       logout: () => {
         set({
-          user: null,
-          accessToken: null,
-          refreshToken: null,
-          expiresAt: null,
+          user: undefined,
+          accessToken: undefined,
+          refreshToken: undefined,
+          expiresAt: undefined,
           isAuthenticated: false,
         })
       },

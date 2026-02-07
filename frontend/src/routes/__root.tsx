@@ -5,7 +5,7 @@ import { TanStackDevtools } from '@tanstack/react-devtools'
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 
 import type { QueryClient } from '@tanstack/react-query'
-import Navbar from '@/components/Navbar'
+import Navbar from '@/components/navbar/Navbar'
 import { SessionManager } from '@/components/auth/SessionManager'
 
 interface MyRouterContext {
