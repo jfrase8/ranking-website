@@ -1,15 +1,24 @@
 import clsx from 'clsx'
 import { Button } from '../ui/button'
+import { forwardRef, type ReactNode } from 'react'
 
 type NavButtonProps = {
   className?: string
   onClick?: () => void
-  children?: React.ReactNode
+  children?: ReactNode
 }
-export default function NavButton({ className, onClick, children }: NavButtonProps) {
-  return (
-    <Button fitParent variant="ghost" className={clsx('w-fit px-4', className)} onClick={onClick}>
-      {children}
-    </Button>
-  )
-}
+export const NavButton = forwardRef<HTMLButtonElement, NavButtonProps>(
+  ({ className, onClick, children }, ref) => {
+    return (
+      <Button
+        fitParent
+        variant="ghostPrimary"
+        className={clsx('w-fit px-4', className)}
+        onClick={onClick}
+        ref={ref}
+      >
+        {children}
+      </Button>
+    )
+  },
+)

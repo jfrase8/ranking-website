@@ -1,10 +1,10 @@
 import { ListTypeEnum } from '@/types/enums/ListTypeEnum'
 import { Button } from '../ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
-import NavButton from './NavButton'
-import type { Dispatch, SetStateAction } from 'react'
+import { type Dispatch, type SetStateAction } from 'react'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { capitalize } from '@/utils/capitalize'
+import { NavButton } from './NavButton'
 
 type CreateListPopoverProps = {
   setActiveModal: Dispatch<SetStateAction<ListTypeEnum | 'login' | null>>

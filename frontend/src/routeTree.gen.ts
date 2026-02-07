@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
 import { Route as RankingTierListIndexRouteImport } from './routes/ranking/tier-list/index'
+import { Route as RankingProfileIndexRouteImport } from './routes/ranking/profile/index'
 import { Route as RankingNumberedListIndexRouteImport } from './routes/ranking/numbered-list/index'
 import { Route as RankingTierListIdRouteImport } from './routes/ranking/tier-list/$id'
 import { Route as RankingNumberedListListIdRouteImport } from './routes/ranking/numbered-list/$listId'
@@ -31,6 +32,11 @@ const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
 const RankingTierListIndexRoute = RankingTierListIndexRouteImport.update({
   id: '/ranking/tier-list/',
   path: '/ranking/tier-list/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RankingProfileIndexRoute = RankingProfileIndexRouteImport.update({
+  id: '/ranking/profile/',
+  path: '/ranking/profile/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RankingNumberedListIndexRoute =
@@ -69,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/ranking/numbered-list/$listId': typeof RankingNumberedListListIdRoute
   '/ranking/tier-list/$id': typeof RankingTierListIdRoute
   '/ranking/numbered-list': typeof RankingNumberedListIndexRoute
+  '/ranking/profile': typeof RankingProfileIndexRoute
   '/ranking/tier-list': typeof RankingTierListIndexRoute
 }
 export interface FileRoutesByTo {
@@ -79,6 +86,7 @@ export interface FileRoutesByTo {
   '/ranking/numbered-list/$listId': typeof RankingNumberedListListIdRoute
   '/ranking/tier-list/$id': typeof RankingTierListIdRoute
   '/ranking/numbered-list': typeof RankingNumberedListIndexRoute
+  '/ranking/profile': typeof RankingProfileIndexRoute
   '/ranking/tier-list': typeof RankingTierListIndexRoute
 }
 export interface FileRoutesById {
@@ -90,6 +98,7 @@ export interface FileRoutesById {
   '/ranking/numbered-list/$listId': typeof RankingNumberedListListIdRoute
   '/ranking/tier-list/$id': typeof RankingTierListIdRoute
   '/ranking/numbered-list/': typeof RankingNumberedListIndexRoute
+  '/ranking/profile/': typeof RankingProfileIndexRoute
   '/ranking/tier-list/': typeof RankingTierListIndexRoute
 }
 export interface FileRouteTypes {
@@ -102,6 +111,7 @@ export interface FileRouteTypes {
     | '/ranking/numbered-list/$listId'
     | '/ranking/tier-list/$id'
     | '/ranking/numbered-list'
+    | '/ranking/profile'
     | '/ranking/tier-list'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -112,6 +122,7 @@ export interface FileRouteTypes {
     | '/ranking/numbered-list/$listId'
     | '/ranking/tier-list/$id'
     | '/ranking/numbered-list'
+    | '/ranking/profile'
     | '/ranking/tier-list'
   id:
     | '__root__'
@@ -122,6 +133,7 @@ export interface FileRouteTypes {
     | '/ranking/numbered-list/$listId'
     | '/ranking/tier-list/$id'
     | '/ranking/numbered-list/'
+    | '/ranking/profile/'
     | '/ranking/tier-list/'
   fileRoutesById: FileRoutesById
 }
@@ -133,6 +145,7 @@ export interface RootRouteChildren {
   RankingNumberedListListIdRoute: typeof RankingNumberedListListIdRoute
   RankingTierListIdRoute: typeof RankingTierListIdRoute
   RankingNumberedListIndexRoute: typeof RankingNumberedListIndexRoute
+  RankingProfileIndexRoute: typeof RankingProfileIndexRoute
   RankingTierListIndexRoute: typeof RankingTierListIndexRoute
 }
 
@@ -157,6 +170,13 @@ declare module '@tanstack/react-router' {
       path: '/ranking/tier-list'
       fullPath: '/ranking/tier-list'
       preLoaderRoute: typeof RankingTierListIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ranking/profile/': {
+      id: '/ranking/profile/'
+      path: '/ranking/profile'
+      fullPath: '/ranking/profile'
+      preLoaderRoute: typeof RankingProfileIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ranking/numbered-list/': {
@@ -205,6 +225,7 @@ const rootRouteChildren: RootRouteChildren = {
   RankingNumberedListListIdRoute: RankingNumberedListListIdRoute,
   RankingTierListIdRoute: RankingTierListIdRoute,
   RankingNumberedListIndexRoute: RankingNumberedListIndexRoute,
+  RankingProfileIndexRoute: RankingProfileIndexRoute,
   RankingTierListIndexRoute: RankingTierListIndexRoute,
 }
 export const routeTree = rootRouteImport

@@ -6,7 +6,7 @@ import { Login } from '../Login'
 import { useAuthStore } from '@/stores/useAuthStore'
 import LoginModal from '../modals/LoginModal'
 import FireIcon from '@/assets/svg/fire.svg?react'
-import NavButton from './NavButton'
+import { NavButton } from './NavButton'
 import CreateListPopover from './CreateListPopover'
 import ProfileSection from './ProfileSection'
 
@@ -61,7 +61,7 @@ export default function Navbar() {
       {/* Right Side */}
       <div className="flex items-center size-full justify-end">
         {/* Profile */}
-        <ProfileSection />
+        {user && <ProfileSection />}
       </div>
 
       {Modal && (
