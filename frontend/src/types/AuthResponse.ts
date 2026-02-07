@@ -1,5 +1,7 @@
 export type AuthResponse = {
   token: string
+  refreshToken: string
+  expiresAt: string
   user: {
     id: string
     userName: string
@@ -9,17 +11,25 @@ export type AuthResponse = {
   }
 }
 
+export type TokenResponse = {
+  accessToken: string
+  refreshToken: string
+  expiresAt: string
+}
+
 export type ZustandAuthLocalType = {
   state: {
-    token: string
-    isAuthorized: boolean
+    accessToken: string | null
+    refreshToken: string | null
+    expiresAt: string | null
+    isAuthenticated: boolean
     user: {
       id: string
       userName: string
       email: string | null
       avatarUrl: string | null
       createdAt: string
-    }
+    } | null
   }
   version: number
 }

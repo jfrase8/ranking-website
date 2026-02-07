@@ -9,19 +9,18 @@ export function Login({ onSuccess }: { onSuccess?: () => void }) {
 
   const loginMutation = useMutation<AuthResponse, Error, string>({
     mutationFn: async (googleToken: string) => {
-      // Since /sigma is in your .env, we just need the remaining path
       const { data } = await apiClient.post<AuthResponse>('/api/auth/google', {
         idToken: googleToken,
       })
       return data
     },
     onSuccess: (data) => {
-      // Make sure your store and localStorage keys ('authToken') match
-      login(data.token, data.user)
+      const { token, refreshToken, expiresAt, user } = data
+      login(token, refreshToken, expiresAt, user)
       onSuccess?.()
     },
     onError: (error: any) => {
-      const errorMsg = error.response?.data?.errors?.['$']?.[0] || error.message
+      const errorMsg = error.response?.data?.message || error.message
       console.error('Authentication failed:', errorMsg)
     },
   })

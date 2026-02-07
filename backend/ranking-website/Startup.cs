@@ -83,6 +83,7 @@ namespace ranking_website
             services.AddSingleton<IListService, DynamoDbListService>();
             services.AddSingleton<IUserService, DynamoDbUserService>();
             services.AddSingleton<IAuthService, AuthService>();
+            services.AddSingleton<IRefreshTokenService, DynamoDbRefreshTokenService>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

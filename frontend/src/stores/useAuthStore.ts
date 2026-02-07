@@ -11,30 +11,59 @@ interface User {
 
 interface AuthStore {
   user: User | null
-  token: string | null
+  accessToken: string | null
+  refreshToken: string | null
+  expiresAt: string | null
   isAuthenticated: boolean
-  login: (token: string, user: User) => void
+
+  login: (accessToken: string, refreshToken: string, expiresAt: string, user: User) => void
   logout: () => void
+  updateTokens: (accessToken: string, refreshToken: string, expiresAt: string) => void
+  isTokenExpired: () => boolean
 }
 
 export const useAuthStore = create<AuthStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
-      token: null,
+      accessToken: null,
+      refreshToken: null,
+      expiresAt: null,
       isAuthenticated: false,
 
-      login: (token: string, user: User) => {
-        set({ user, token, isAuthenticated: true })
+      login: (accessToken: string, refreshToken: string, expiresAt: string, user: User) => {
+        set({
+          user,
+          accessToken,
+          refreshToken,
+          expiresAt,
+          isAuthenticated: true,
+        })
       },
 
       logout: () => {
-        set({ user: null, token: null, isAuthenticated: false })
+        set({
+          user: null,
+          accessToken: null,
+          refreshToken: null,
+          expiresAt: null,
+          isAuthenticated: false,
+        })
+      },
+
+      updateTokens: (accessToken: string, refreshToken: string, expiresAt: string) => {
+        set({ accessToken, refreshToken, expiresAt })
+      },
+
+      isTokenExpired: () => {
+        const { expiresAt } = get()
+        if (!expiresAt) return true
+        // Check if token expires in less than 1 minute
+        return new Date(expiresAt).getTime() - Date.now() < 60000
       },
     }),
     {
-      name: 'auth-storage', // localStorage key
-      // Automatically syncs to localStorage
+      name: 'auth-storage',
     },
   ),
 )

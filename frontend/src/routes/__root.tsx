@@ -6,6 +6,7 @@ import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 
 import type { QueryClient } from '@tanstack/react-query'
 import Navbar from '@/components/Navbar'
+import { SessionManager } from '@/components/auth/SessionManager'
 
 interface MyRouterContext {
   queryClient: QueryClient
@@ -13,21 +14,23 @@ interface MyRouterContext {
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   component: () => (
-    <div className="flex flex-col h-screen w-full bg-indigo-100">
-      <Navbar />
-      <Outlet />
-      <TanStackDevtools
-        config={{
-          position: 'bottom-right',
-        }}
-        plugins={[
-          {
-            name: 'Tanstack Router',
-            render: <TanStackRouterDevtoolsPanel />,
-          },
-          TanStackQueryDevtools,
-        ]}
-      />
-    </div>
+    <SessionManager>
+      <div className="flex flex-col h-screen w-full bg-indigo-100">
+        <Navbar />
+        <Outlet />
+        <TanStackDevtools
+          config={{
+            position: 'bottom-right',
+          }}
+          plugins={[
+            {
+              name: 'Tanstack Router',
+              render: <TanStackRouterDevtoolsPanel />,
+            },
+            TanStackQueryDevtools,
+          ]}
+        />
+      </div>
+    </SessionManager>
   ),
 })
