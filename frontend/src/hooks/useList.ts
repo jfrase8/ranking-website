@@ -1,9 +1,10 @@
 import { listApi } from '@/api/list/listApi'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import type { UpdateListBody } from '@/api/list/types/body'
+import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 
 // Hook to fetch all of a user's lists
 export const useLists = () => {
-  return useQuery({
+  return useSuspenseQuery({
     queryKey: ['lists'],
     queryFn: () => listApi.getUserLists(),
     refetchOnWindowFocus: false,
@@ -11,11 +12,15 @@ export const useLists = () => {
 }
 
 // Hook to fetch list data
-export const useListData = (listId: string) => {
-  return useQuery({
-    queryKey: ['listData', listId],
-    queryFn: () => listApi.getListData(listId),
-    enabled: !!listId, // Only run if listId exists
+export const useUpdateList = (listId: string) => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (list: UpdateListBody) => listApi.updateList(listId, list),
+    onSuccess: () => {
+      // Invalidate and refetch
+      queryClient.invalidateQueries({ queryKey: ['lists'] })
+    },
   })
 }
 

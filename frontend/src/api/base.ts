@@ -56,7 +56,7 @@ const refreshAccessToken = async (): Promise<string | null> => {
   } catch (error) {
     // Refresh failed, clear auth
     localStorage.removeItem('auth-storage')
-    window.location.href = '/login'
+    window.location.href = '/'
     return null
   }
 }

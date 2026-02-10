@@ -141,6 +141,7 @@ namespace ranking_website.Services.List
                 TableName = ListsTableName,
                 Key = new Dictionary<string, AttributeValue>
                 {
+                    { "UserId", new AttributeValue { S = existingList.UserId } },
                     { "Id", new AttributeValue { S = listId } }
                 },
                 UpdateExpression = "SET " + string.Join(", ", updateExpression),
@@ -164,6 +165,13 @@ namespace ranking_website.Services.List
 
         public async Task<bool> DeleteListAsync(string listId)
         {
+            // First check if list exists
+            var existingList = await GetListAsync(listId);
+            if (existingList == null)
+            {
+                return false;
+            }
+
             // First delete all items in the list
             var items = await GetListItemsAsync(listId);
             foreach (var item in items)
@@ -177,6 +185,7 @@ namespace ranking_website.Services.List
                 TableName = ListsTableName,
                 Key = new Dictionary<string, AttributeValue>
                 {
+                    { "UserId", new AttributeValue { S = existingList.UserId } },
                     { "Id", new AttributeValue { S = listId } }
                 }
             };
