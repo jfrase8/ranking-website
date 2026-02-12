@@ -10,6 +10,9 @@ import { Section } from '@/components/Section'
 import { Check } from 'lucide-react'
 import type { UpdateListBody } from '@/api/list/types/body'
 import { Spinner } from '@/components/ui/spinner'
+import { Toggle } from '@/components/ui/toggle'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { Textarea } from '@/components/ui/textarea'
 
 export default function EditList() {
   const { listId } = useParams({ from: '/ranking/numbered-list/$listId' })
@@ -34,6 +37,9 @@ export default function EditList() {
 
   const [titleInput, setTitleInput] = useState(listData?.name || '')
   const [descriptionInput, setDescriptionInput] = useState(listData?.description || '')
+  const [privacyToggle, setPrivacyToggle] = useState<'private' | 'public'>(
+    listData?.privacy || 'private',
+  )
   const debounceTimer = useRef<NodeJS.Timeout>(null)
 
   if (listsError || listItemsError) return console.error(listsError || listItemsError)
@@ -61,7 +67,7 @@ export default function EditList() {
     })
   }
 
-  const onDescriptionChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const onDescriptionChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     if (debounceTimer.current) clearTimeout(debounceTimer.current)
 
     setDescriptionInput(e.target.value)
@@ -70,6 +76,22 @@ export default function EditList() {
     updateListDebounce({
       description: e.target.value,
     })
+  }
+
+  const togglePrivacy = () => {
+    setPrivacyToggle((prev) => (prev === 'private' ? 'public' : 'private'))
+  }
+
+  const onPrivacyChange = async (privacy: 'private' | 'public' | '') => {
+    if (privacy === '') return
+    try {
+      togglePrivacy()
+      await updateListMutation.mutateAsync({ privacy })
+    } catch (err) {
+      // Toggle privacy back if update failed
+      togglePrivacy()
+      console.error('Failed to update list:', err)
+    }
   }
 
   const addItem = async (itemName: string) => {
@@ -138,11 +160,26 @@ export default function EditList() {
         <Section className="w-1/4" header={<Text variant="headerSecondary">List Details</Text>}>
           <div className="flex flex-col gap-4">
             {listData ? (
-              <div className="flex flex-col gap-2">
-                <Input value={titleInput} onChange={onTitleChange} />
-                <Text variant="secondary">{listData.description}</Text>
-                <Text variant="secondary">{listData.privacy}</Text>
-                <Text variant="secondary">{listData.createdAt}</Text>
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1 border border-secondary rounded-xl p-2 items-center shadow-lg">
+                  <Text variant="secondary">Title</Text>
+                  <Input value={titleInput} onChange={onTitleChange} />
+                </div>
+                <div className="flex flex-col gap-1 shadow-lg">
+                  <Text variant="secondary">Description</Text>
+                  <Textarea value={descriptionInput} onChange={onDescriptionChange} />
+                </div>
+                <div className="flex justify-between items-center">
+                  <Text variant="secondary">Privacy</Text>
+                  <ToggleGroup
+                    type="single"
+                    value={privacyToggle}
+                    onValueChange={(value: 'public' | 'private' | '') => onPrivacyChange(value)}
+                  >
+                    <ToggleGroupItem value="public">Public</ToggleGroupItem>
+                    <ToggleGroupItem value="private">Private</ToggleGroupItem>
+                  </ToggleGroup>
+                </div>
               </div>
             ) : (
               <Text>Error finding list data</Text>
