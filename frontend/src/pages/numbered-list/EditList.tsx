@@ -1,18 +1,17 @@
-import { useRef, useState, type ChangeEvent } from 'react'
+import type { UpdateListBody } from '@/api/list/types/body'
 import SearchList from '@/components/SearchList'
+import { Section } from '@/components/Section'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Text } from '@/components/ui/text'
-import { useAddItem, useListItems, useRemoveItem } from '@/hooks/useListItems'
-import { useLists, useUpdateList } from '@/hooks/useList'
-import { useParams } from '@tanstack/react-router'
-import { Section } from '@/components/Section'
-import { Check } from 'lucide-react'
-import type { UpdateListBody } from '@/api/list/types/body'
 import { Spinner } from '@/components/ui/spinner'
-import { Toggle } from '@/components/ui/toggle'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { Text } from '@/components/ui/text'
 import { Textarea } from '@/components/ui/textarea'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { useLists, useUpdateList } from '@/hooks/useList'
+import { useAddItem, useListItems, useRemoveItem } from '@/hooks/useListItems'
+import { useParams } from '@tanstack/react-router'
+import { Check } from 'lucide-react'
+import { useRef, useState, type ChangeEvent } from 'react'
 
 export default function EditList() {
   const { listId } = useParams({ from: '/ranking/numbered-list/$listId' })
@@ -117,8 +116,16 @@ export default function EditList() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="w-full flex justify-end pt-4 pr-4">
-        <span className="flex justify-center gap-1 items-center py-2 px-4 border border-primary rounded-full bg-primary-foreground">
+      <div className="w-full flex justify-between pt-4 px-4">
+        <Input
+          value={titleInput}
+          onChange={onTitleChange}
+          className="bg-none rounded-full focus-visible:bg-white hover:bg-white/60 border-2 focus-visible:ring-0 transition-colors duration-300 shadow-none text-2xl! h-full font-semibold text-indigo-900"
+          placeholder="Add a Title..."
+          autoSize
+          maxWidth="50%"
+        />
+        <span className="flex justify-center gap-1 items-center py-2 px-4 border border-primary rounded-full bg-primary-foreground my-2">
           <Text>{saved ? 'Saved' : 'Saving'}</Text>
           {saved ? (
             <Check className="text-primary size-4" />
@@ -161,10 +168,6 @@ export default function EditList() {
           <div className="flex flex-col gap-4">
             {listData ? (
               <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1 border border-secondary rounded-xl p-2 items-center shadow-lg">
-                  <Text variant="secondary">Title</Text>
-                  <Input value={titleInput} onChange={onTitleChange} />
-                </div>
                 <div className="flex flex-col gap-1 shadow-lg">
                   <Text variant="secondary">Description</Text>
                   <Textarea value={descriptionInput} onChange={onDescriptionChange} />
