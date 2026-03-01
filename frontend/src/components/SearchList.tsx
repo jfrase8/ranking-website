@@ -1,22 +1,20 @@
-import type { VariantProps } from 'class-variance-authority'
-import { Button, buttonVariants } from './ui/button'
+import clsx from 'clsx'
 
 type SearchListProps = {
   search: string
-  list: string[]
-  buttonVariant: VariantProps<typeof buttonVariants>['variant']
-  onClick: (item: string) => void
+  filterBy: string[]
+  children: (filteredList: string[]) => React.ReactNode
+  className?: string
 }
-export default function SearchList({ search, list, buttonVariant, onClick }: SearchListProps) {
-  const filteredList = list.filter((item) => item.toLowerCase().includes(search.toLowerCase()))
+
+export default function SearchList({ search, filterBy, className, children }: SearchListProps) {
+  const filteredList = filterBy.filter((name) => name.toLowerCase().includes(search.toLowerCase()))
 
   return (
-    <div className="flex flex-col gap-1">
-      {filteredList.map((item) => (
-        <Button key={item} onClick={() => onClick(item)} variant={buttonVariant}>
-          {item}
-        </Button>
-      ))}
+    <div
+      className={clsx('flex flex-col gap-2 overflow-y-auto px-3 py-1 min-h-0 flex-1', className)}
+    >
+      {children(filteredList)}
     </div>
   )
 }

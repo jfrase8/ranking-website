@@ -1,4 +1,5 @@
 import type { UpdateListBody } from '@/api/list/types/body'
+import ImageCard from '@/components/ImageCard'
 import SearchList from '@/components/SearchList'
 import { Section } from '@/components/Section'
 import { Button } from '@/components/ui/button'
@@ -114,8 +115,16 @@ export default function EditList() {
     }
   }
 
+  const testListItems = {
+    Cow: '/src/assets/animals/cow.jpg',
+    Mammoth: '/src/assets/animals/mammoth.jpg',
+    Elephant: '/src/assets/animals/elephant.jpg',
+    Lobster: '/src/assets/animals/lobster.jpg',
+    Horse: '/src/assets/animals/horse.jpg',
+    Otter: '/src/assets/animals/otter.jpg',
+  }
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-0 flex-1">
       <div className="w-full flex justify-between pt-4 px-4">
         <Input
           value={titleInput}
@@ -134,19 +143,28 @@ export default function EditList() {
           )}
         </span>
       </div>
-      <div className="flex h-full">
-        <Section className="w-1/4" header={<Text variant="headerSecondary">Add Items</Text>}>
+      <div className="flex h-full min-h-0 flex-1">
+        <Section
+          className="w-1/4 min-h-0"
+          header={<Text variant="headerSecondary">Add Items</Text>}
+        >
           <Input
             onChange={(e) => setSearch(e.target.value)}
             value={search}
             placeholder="Search..."
           />
-          <SearchList
-            search={search}
-            list={['Cow', 'Mammoth', 'Centipede', 'Lobster', 'Horse', 'Otter']}
-            onClick={(item) => addItem(item)}
-            buttonVariant="secondary"
-          />
+          <SearchList search={search} filterBy={Object.keys(testListItems)}>
+            {(filteredList) =>
+              filteredList.map((item) => (
+                <ImageCard
+                  key={item}
+                  image={testListItems[item as keyof typeof testListItems]}
+                  title={item}
+                  onClick={() => addItem(item)}
+                />
+              ))
+            }
+          </SearchList>
         </Section>
         <Section
           className="w-1/2"

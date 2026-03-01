@@ -26,7 +26,7 @@ export function Section({ header, variant = 'primary', className, children }: Se
   return (
     <div className={sectionVariants({ variant, className })}>
       <div className={headerVariants({ variant })}>{header}</div>
-      <div className="flex flex-col px-4 gap-4">{children}</div>
+      <div className="flex flex-col px-4 gap-4 min-h-0 flex-1">{children}</div>
     </div>
   )
 }

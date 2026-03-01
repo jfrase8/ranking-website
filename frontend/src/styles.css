@@ -43,6 +43,7 @@ code {
   --primary-dark: oklch(39.8% 0.195 277.366);
   --primary-foreground: oklch(1 0 0);
   --secondary: oklch(93% 0.034 272.788);
+  --muted-secondary: oklch(85.57% 0.02722 271.827);
   --secondary-foreground: oklch(58.5% 0.233 277.117);
   --muted: oklch(1 0 0);
   --muted-foreground: oklch(0.552 0.016 285.938);
@@ -115,6 +116,7 @@ code {
   --color-primary-dark: var(--primary-dark);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
+  --color-muted-secondary: var(--muted-secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
@@ -150,6 +152,24 @@ code {
   * {
     @apply border-border outline-ring/50;
   }
+
+  *::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  *::-webkit-scrollbar-thumb {
+    background-color: theme(--color-secondary);
+    border-radius: 999px;
+  }
+  
+  *::-webkit-scrollbar-thumb:hover {
+  background-color: theme(--color-muted-secondary);
+  }
+
   body {
     @apply bg-background text-foreground;
   }
